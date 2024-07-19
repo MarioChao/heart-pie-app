@@ -59,7 +59,7 @@ export function getShuffledOptions() {
 	const allChoices = getRPSChoices();
 	const options = [];
 
-	for (let c of allChoices) {
+	for (const c of allChoices) {
 		// Formatted for select menus
 		// https://discord.com/developers/docs/interactions/message-components#select-menu-object-select-option-structure
 		options.push({

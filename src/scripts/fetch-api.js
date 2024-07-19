@@ -5,8 +5,6 @@ async function fetchUrl(apiUrl, urlParameters, requestOptions) {
 		const searchParams = new URLSearchParams(urlParameters);
 		apiUrl += "?" + searchParams.toString();
 	}
-	console.log(apiUrl);
-	console.log(requestOptions);
 	console.log("Fetching");
 
 	const request = new Request(apiUrl, requestOptions);

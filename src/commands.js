@@ -2,19 +2,42 @@
 
 // Run from the command line
 
+// Imports
+
 import dotenv from 'dotenv';
 import { getRPSChoices } from './scripts/rps-game.js';
 import { functionModule as epicDepartment } from './scripts/epic-department.js';
 import { capitalize, InstallGlobalCommands } from './scripts/utils.js';
 
-dotenv.config({ path: '.dev.vars' })
+// Local environment
+
+dotenv.config({ path: '.dev.vars' });
+
+// Constants
+
+const usernameOption = {
+	type: 3,
+	name: 'username',
+	description: 'Player username on Roblox (any if you use user_id)',
+	required: true,
+	max_length: 50,
+	autocomplete: true,
+};
+const userIdOption = {
+	type: 4,
+	name: 'user_id',
+	description: 'Player userId on Roblox',
+	required: false,
+	min_value: 1,
+	autocomplete: true,
+};
 
 // Create command choices from array
 function createCommandChoices(choiceArray) {
 	const choices = choiceArray;
 	const commandChoices = [];
 
-	for (let choice of choices) {
+	for (const choice of choices) {
 		commandChoices.push({
 			name: capitalize(choice),
 			value: choice,
@@ -60,7 +83,7 @@ const ENCODE_COMMAND = {
 		}
 	],
 	type: 1,
-}
+};
 
 const DECODE_COMMAND = {
 	name: 'decode',
@@ -74,28 +97,52 @@ const DECODE_COMMAND = {
 		}
 	],
 	type: 1,
-}
+};
 
 // Pie commands
 const PIEHIKE_COMMAND = {
 	name: 'hike',
 	description: 'Find a random pie hike challenge',
 	type: 1,
-}
+};
 
 const PIEHIKEALL_COMMAND = {
 	name: 'hikeall',
 	description: 'List out the possible pie hike challenges',
 	type: 1,
-}
+};
 
 const PIEBAKE_COMMAND = {
 	name: 'bake',
 	description: 'Bake a random pie',
 	type: 1,
-}
+};
+
+const GETPIES_COMMAND = {
+	type: 1,
+	name: 'getpies',
+	description: 'Get the pies that a player owns',
+	options: [
+		usernameOption,
+		userIdOption,
+	],
+};
 
 // Epic Department commands
+const UNIVERSEID_COMMAND = {
+	type: 1,
+	name: 'getuniverseid',
+	description: 'Get the universe id of a Roblox place',
+	options: [
+		{
+			type: 4,
+			name: 'place_id',
+			description: "The game's place id",
+			required: true,
+		}
+	]
+}
+
 const BADGES_COMMAND = {
 	type: 1,
 	name: 'checkbadges',
@@ -113,22 +160,8 @@ const BADGES_COMMAND = {
 					required: true,
 					choices: createCommandChoices(epicDepartment.gameNames),
 				},
-				{
-					type: 3,
-					name: 'username',
-					description: 'Player username on Roblox (any if you use user_id)',
-					required: true,
-					max_length: 50,
-					autocomplete: true,
-				},
-				{
-					type: 4,
-					name: 'user_id',
-					description: 'Player userId on Roblox',
-					required: false,
-					min_value: 1,
-					autocomplete: true,
-				},
+				usernameOption,
+				userIdOption,
 			],
 		},
 		{
@@ -142,29 +175,16 @@ const BADGES_COMMAND = {
 					description: "The game's place id",
 					required: true,
 				},
-				{
-					type: 3,
-					name: 'username',
-					description: 'Player username on Roblox (any if you use user_id)',
-					required: true,
-					max_length: 50,
-					autocomplete: true,
-				},
-				{
-					type: 4,
-					name: 'user_id',
-					description: 'Player userId on Roblox',
-					required: false,
-					min_value: 1,
-					autocomplete: true,
-				},
+				usernameOption,
+				userIdOption,
 			],
 		},
 	],
-}
+};
 
 // Install commands globally
-const ALL_COMMANDS = [TEST_COMMAND, RPS_COMMAND, ENCODE_COMMAND, DECODE_COMMAND,
-	PIEHIKE_COMMAND, PIEHIKEALL_COMMAND, PIEBAKE_COMMAND, BADGES_COMMAND];
+const ALL_COMMANDS = [ENCODE_COMMAND, DECODE_COMMAND,
+	PIEHIKE_COMMAND, PIEHIKEALL_COMMAND, PIEBAKE_COMMAND, GETPIES_COMMAND,
+	UNIVERSEID_COMMAND, BADGES_COMMAND];
 
 InstallGlobalCommands(process.env.DISCORD_APPLICATION_ID, ALL_COMMANDS);

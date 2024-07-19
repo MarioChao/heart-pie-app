@@ -1,5 +1,7 @@
+// Imports
 import 'dotenv/config';
 import { verifyKey } from 'discord-interactions';
+import { functionModule as robloxFetchApi } from './roblox-fetch.js';
 
 // Combined from discord-example-app and cloudflare-sample-app
 export async function VerifyDiscordRequest(request, env) {
@@ -60,10 +62,71 @@ export function contextWaitUntil(context, callback) {
 			await callback();
 			resolve(1);
 		} catch {
+			console.error("Error sending message:", error);
 			reject("Failed");
 		}
 	});
 	context.waitUntil(promise);
+}
+
+/**
+ * 
+ * @param {{username: string, userId: number?}} playerInfo 
+ * @returns The corrected playerInfo with matching username and userId
+ */
+export async function validatePlayerInfo(playerInfo) {
+	// Get player information
+	let username = playerInfo.username;
+	let userId = playerInfo.userId;
+	if (!userId) {
+		// Get player userId
+		try {
+			userId = await robloxFetchApi.fetchUserId(username);
+		} catch (error) {
+			throw error;
+		}
+	}
+	
+	// Get player username
+	let player;
+	try {
+		player = await robloxFetchApi.fetchPlayer(userId);
+	} catch (error) {
+		throw error;
+	}
+	username = player.name;
+
+	// Return
+	return {username, userId}
+}
+
+/**
+ * 
+ * @param {{string: [any]}} requirements 
+ * @param {{string: {any: boolean}}} statistics 
+ * @returns Whether the provided statistics satisfy the given requirements
+ */
+export function checkMeetRequirements(requirements, statistics) {
+	for (const [key, values] of Object.entries(requirements)) {
+		// No stat
+		const stat = statistics[key];
+		if (!stat) {
+			// Check if requirement is empty
+			if (values.length == 0) {
+				continue;
+			} else {
+				return false;
+			}
+		}
+
+		// Meet requirement
+		for (const value of values) {
+			if (stat[value] !== true) {
+				return false;
+			}
+		}
+	}
+	return true;
 }
 
 // Simple method that returns a random emoji from list

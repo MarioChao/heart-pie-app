@@ -8,6 +8,8 @@
  * Learn more at https://developers.cloudflare.com/workers/
  */
 
+// Imports
+
 import { AutoRouter, json } from "itty-router";
 import {
 	InteractionType,
@@ -39,11 +41,28 @@ class JsonResponse extends Response {
 	}
 }
 
+// Constants
+
 // Create an itty-router
 const router = AutoRouter();
 
 // Store for in-progress games. In production, you'd want to use a DB
 const activeGames = {};
+
+// Default deferred response
+const deferredEphemeralResponse = {
+	type: InteractionResponseType.DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE,
+	data: {
+		content: "Loading",
+		flags: InteractionResponseFlags.EPHEMERAL,
+	},
+};
+const deferredNormalResponse = {
+	type: InteractionResponseType.DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE,
+	data: {
+		content: "Loading",
+	},
+};
 
 /**
  * A simple :wave: hello page to verify the worker is working.
@@ -71,7 +90,6 @@ router.post("/interactions", async (request, env, context) => {
 
 	// Interaction type and data
 	const { type, id, data, token } = interaction;
-	console.log(interaction);
 
 	/**
 	 * Handle verification requests
@@ -174,7 +192,6 @@ router.post("/interactions", async (request, env, context) => {
 				type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
 				data: {
 					content: resultText,
-					flags: InteractionResponseFlags.EPHEMERAL,
 				},
 			});
 		}
@@ -196,8 +213,61 @@ router.post("/interactions", async (request, env, context) => {
 
 		// "bake" command
 		if (name === "bake") {
-			// Get pie
-			const resultText = pieHike.bakeRandom();
+			// Defer response
+			contextWaitUntil(context, async () => {
+				// Get pie
+				const resultText = pieHike.bakeRandom();
+	
+				// Result body
+				const resultBody = {
+					content: resultText,
+				};
+
+				// Edit response
+				const endpoint = `webhooks/${env.DISCORD_APPLICATION_ID}/${token}/messages/@original`;
+				await DiscordRequest(endpoint, {
+					method: "PATCH",
+					body: resultBody,
+				});
+			});
+
+			// Initial response
+			return new JsonResponse(deferredNormalResponse);
+		}
+
+		// "getpies" command
+		if (name === "getpies") {
+			// Defer response
+			contextWaitUntil(context, async () => {
+				// Get result
+				const playerInfo = {
+					username: data.options[0].value,
+					userId: data.options[1] && data.options[1].value,
+				};
+				const resultBody = await pieHike.getPies(playerInfo);
+
+				// Edit response
+				const endpoint = `webhooks/${env.DISCORD_APPLICATION_ID}/${token}/messages/@original`;
+				await DiscordRequest(endpoint, {
+					method: "PATCH",
+					body: resultBody,
+				});
+			});
+
+			// Initial response
+			return new JsonResponse(deferredEphemeralResponse);
+		}
+
+		/* Epic Department commands */
+		
+		// "getuniverseid" command
+		if (name === "getuniverseid") {
+			// Get info
+			const placeId = data.options[0].value;
+
+			// Get universe id
+			const universeId = await epicDepartment.getUniverseId(placeId);
+			const resultText = `\`${universeId}\``;
 
 			// Response
 			return new JsonResponse({
@@ -205,12 +275,11 @@ router.post("/interactions", async (request, env, context) => {
 				data: {
 					content: resultText,
 					flags: InteractionResponseFlags.EPHEMERAL,
-				}
+				},
 			});
 		}
 
-		/* Epic Department commands */
-		// "badges" command
+		// "checkbadges" command
 		if (name === "checkbadges") {
 			// Get info
 			const subcommand = data.options[0];
@@ -218,46 +287,35 @@ router.post("/interactions", async (request, env, context) => {
 
 			// Defer response
 			contextWaitUntil(context, async () => {
-				try {
-					// Get result
-					let resultBody;
-					if (subcommandName === "game_name") {
-						const gameName = subcommand.options[0].value;
-						console.log(subcommand.options);
-						const playerInfo = {
-							username: subcommand.options[1].value,
-							userId: subcommand.options[2] && subcommand.options[2].value,
-						};
-						resultBody = await epicDepartment.checkBadgesByGameName(gameName, playerInfo);
-					} else if (subcommandName === "place_id") {
-						const placeId = subcommand.options[0].value;
-						const playerInfo = {
-							username: subcommand.options[1].value,
-							userId: subcommand.options[2] && subcommand.options[2].value,
-						};
-						resultBody = await epicDepartment.checkBadgesByPlaceId(placeId, playerInfo);
-					}
-					console.log(resultBody);
-					
-					// Edit response
-					const endpoint = `webhooks/${env.DISCORD_APPLICATION_ID}/${token}/messages/@original`;
-					console.log(endpoint);
-					await DiscordRequest(endpoint, {
-						method: "PATCH",
-						body: resultBody,
-					});
-				} catch (error) {
-					console.error("Error sending message:", error);
+				// Get result
+				let resultBody;
+				if (subcommandName === "game_name") {
+					const gameName = subcommand.options[0].value;
+					const playerInfo = {
+						username: subcommand.options[1].value,
+						userId: subcommand.options[2] && subcommand.options[2].value,
+					};
+					resultBody = await epicDepartment.checkBadgesByGameName(gameName, playerInfo);
+				} else if (subcommandName === "place_id") {
+					const placeId = subcommand.options[0].value;
+					const playerInfo = {
+						username: subcommand.options[1].value,
+						userId: subcommand.options[2] && subcommand.options[2].value,
+					};
+					resultBody = await epicDepartment.checkBadgesByPlaceId(placeId, playerInfo);
 				}
+				console.log(resultBody);
+				
+				// Edit response
+				const endpoint = `webhooks/${env.DISCORD_APPLICATION_ID}/${token}/messages/@original`;
+				await DiscordRequest(endpoint, {
+					method: "PATCH",
+					body: resultBody,
+				});
 			});
 
-			return new JsonResponse({
-				type: InteractionResponseType.DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE,
-				data: {
-					content: "Loading",
-					flags: InteractionResponseFlags.EPHEMERAL,
-				},
-			});
+			// Initial response
+			return new JsonResponse(deferredEphemeralResponse);
 
 		}
 	} else if (type === InteractionType.MESSAGE_COMPONENT) {
