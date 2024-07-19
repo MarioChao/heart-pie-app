@@ -2,7 +2,7 @@
 
 The repository for the Heart Pie bot on discord.
 
-For Roblox usage.
+For Roblox usage and Pie Hiking.
 
 ## Credits
 
@@ -10,3 +10,4 @@ For Roblox usage.
 - Roblox Web Apis
 - [Cloudflare Workers](https://workers.cloudflare.com/) for hosting
 - [itty router](https://itty.dev/itty-router/)
+- Epic Department

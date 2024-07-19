@@ -192,6 +192,7 @@ router.post("/interactions", async (request, env, context) => {
 				type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
 				data: {
 					content: resultText,
+					flags: InteractionResponseFlags.EPHEMERAL,
 				},
 			});
 		}
@@ -232,7 +233,7 @@ router.post("/interactions", async (request, env, context) => {
 			});
 
 			// Initial response
-			return new JsonResponse(deferredNormalResponse);
+			return new JsonResponse(deferredEphemeralResponse);
 		}
 
 		// "getpies" command
