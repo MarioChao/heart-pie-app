@@ -86,11 +86,11 @@ export function createTextInputComponent(label, customId, required) {
 export function createPagesActionRowComponent(page, pageCount, buttonIdText, replacePattern = "$") {
 	const regex = new RegExp(replacePattern, "g");
 	const initialComponents = [
-		createButtonComponent("1", buttonIdText.replace(regex, "1.0"), page == 1),
+		createButtonComponent("1", buttonIdText.replace(regex, "01"), page == 1),
 		createButtonComponent("◀", buttonIdText.replace(regex, `${page - 1}`), page <= 1),
 		createButtonComponent("...", buttonIdText.replace(regex, "search")),
 		createButtonComponent("▶", buttonIdText.replace(regex, `${page + 1}`), page >= pageCount),
-		createButtonComponent(`${pageCount}`, buttonIdText.replace(regex, `${pageCount}.0`), page == pageCount),
+		createButtonComponent(`${pageCount}`, buttonIdText.replace(regex, `00${pageCount}`), page == pageCount),
 	];
 
 	const finalComponent = {
