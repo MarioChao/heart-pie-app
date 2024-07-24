@@ -49,13 +49,14 @@ function createCommandChoices(choiceArray) {
 
 // Test command
 const TEST_COMMAND = {
+	type: 1,
 	name: 'test',
 	description: 'Basic command',
-	type: 1,
 };
 
 // RPS command containing options
 const RPS_COMMAND = {
+	type: 1,
 	name: 'challenge_rps',
 	description: 'Challenge others to a match of rock paper scissors',
 	options: [
@@ -67,11 +68,11 @@ const RPS_COMMAND = {
 			choices: createCommandChoices(getRPSChoices()),
 		},
 	],
-	type: 1,
 };
 
 // Encoding commands
 const ENCODE_COMMAND = {
+	type: 1,
 	name: 'encode',
 	description: 'Encode a message using base64',
 	options: [
@@ -82,10 +83,10 @@ const ENCODE_COMMAND = {
 			required: true,
 		}
 	],
-	type: 1,
 };
 
 const DECODE_COMMAND = {
+	type: 1,
 	name: 'decode',
 	description: 'Decode a base64 message',
 	options: [
@@ -96,7 +97,6 @@ const DECODE_COMMAND = {
 			required: true,
 		}
 	],
-	type: 1,
 };
 
 // Pie commands
@@ -107,15 +107,15 @@ const PIEHIKE_COMMAND = {
 };
 
 const PIEHIKEALL_COMMAND = {
+	type: 1,
 	name: 'hikeall',
 	description: 'List out the possible pie hike challenges',
-	type: 1,
 };
 
 const PIEBAKE_COMMAND = {
+	type: 1,
 	name: 'bake',
 	description: 'Bake a random pie',
-	type: 1,
 };
 
 const GETPIES_COMMAND = {
@@ -143,7 +143,7 @@ const UNIVERSEID_COMMAND = {
 	]
 }
 
-const BADGES_COMMAND = {
+const CHECK_BADGES_COMMAND = {
 	type: 1,
 	name: 'checkbadges',
 	description: 'Check a player\'s owned badges in a game',
@@ -156,7 +156,7 @@ const BADGES_COMMAND = {
 				{
 					type: 3,
 					name: 'game_name',
-					description: 'Name of the game to get info from',
+					description: 'Name of the game',
 					required: true,
 					choices: createCommandChoices(epicDepartment.gameNames),
 				},
@@ -182,9 +182,44 @@ const BADGES_COMMAND = {
 	],
 };
 
+const LIST_BADGES_COMMAND = {
+	type: 1,
+	name: 'listbadges',
+	description: "List out the badges of a game",
+	options: [
+		{
+			type: 1,
+			name: 'game_name',
+			description: 'List out the badges of a game by name',
+			options: [
+				{
+					type: 3,
+					name: 'game_name',
+					description: 'Name of the game',
+					required: true,
+					choices: createCommandChoices(epicDepartment.gameNames),
+				},
+			],
+		},
+		{
+			type: 1,
+			name: 'place_id',
+			description: "List out the badges of a game by place id",
+			options: [
+				{
+					type: 4,
+					name: 'place_id',
+					description: "The game's place id",
+					required: true,
+				},
+			],
+		},
+	],
+};
+
 // Install commands globally
 const ALL_COMMANDS = [ENCODE_COMMAND, DECODE_COMMAND,
 	PIEHIKE_COMMAND, PIEHIKEALL_COMMAND, PIEBAKE_COMMAND, GETPIES_COMMAND,
-	UNIVERSEID_COMMAND, BADGES_COMMAND];
+	UNIVERSEID_COMMAND, CHECK_BADGES_COMMAND, LIST_BADGES_COMMAND];
 
 InstallGlobalCommands(process.env.DISCORD_APPLICATION_ID, ALL_COMMANDS);

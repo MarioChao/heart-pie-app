@@ -6,8 +6,8 @@ import { functionModule as fetchApi } from "./fetch-api.js";
 
 // Constants
 
-const badgesPerFetch = 100;
-const reFetchMinutes = 10;
+const badgesPerFetch = 100; // 10, 25, 50, 100
+const reFetchMinutes = 20;
 
 const universeBadgesCache = {};
 
@@ -113,6 +113,7 @@ async function fetchBadgesByUniverseId(universeId) {
 	// Memoize
 	let willFetch = false;
 	if (universeBadgesCache[universeId] == null) {
+		universeBadgesCache[universeId] = {};
 		willFetch = true;
 	} else {
 		let previousTime = universeBadgesCache[universeId].time;
@@ -125,6 +126,7 @@ async function fetchBadgesByUniverseId(universeId) {
 	// Fetch if needed
 	if (willFetch) {
 		try {
+			universeBadgesCache[universeId].time = Date.now();
 			universeBadgesCache[universeId] = {
 				badges: await _fetchBadges(universeId),
 				time: Date.now(),

@@ -1,7 +1,7 @@
 // Imports
 import { functionModule as robloxFetchApi } from './roblox-fetch.js';
 import { validatePlayerInfo } from './utils.js';
-import { successColor, failBody, fieldValueLimit } from './embed-constants.js';
+import { successColor, failBody, fieldValueLimit, createFailBody } from './embed-constants.js';
 
 // Constants
 const gameIds = {
@@ -11,10 +11,92 @@ const gameIds = {
 	"Juke's Tower of Hell": 8562822414,
 };
 
+const reFetchMinutes = 20;
+const universeBadgeFieldsCache = {};
+
 // Local functions
 function getGameNames() {
 	const gameNames = Object.keys(gameIds);
 	return gameNames;
+}
+
+async function _createBadgeFields(universeId) {
+	// Get game badges
+	let gameBadges;
+	try {
+		gameBadges = await robloxFetchApi.fetchBadgesByUniverseId(universeId);
+	} catch (error) {
+		throw error;
+	}
+
+	// Sort array
+	gameBadges.sort((a, b) => {
+		return a.name > b.name ? 1 : -1;
+	});
+
+	// Create badge list texts
+	let embedText = "";
+	const storedFields = [];
+	for (let i = 0; i < gameBadges.length; i++) {
+		// Generate info
+		const badge = gameBadges[i];
+		let badgeUrl = `https://roblox.com/badges/${badge.id}`;
+		let addText = `\n[${badge.name}](${badgeUrl})`;
+
+		// Check overflow
+		if (embedText.length + addText.length > fieldValueLimit) {
+			// Push field
+			storedFields.push({
+				name: `Badges (${gameBadges.length})`,
+				value: embedText,
+				inline: true,
+			});
+			embedText = "";
+		}
+
+		// Update text
+		embedText += addText;
+	}
+	// Push final field
+	storedFields.push({
+		name: `Badges (${gameBadges.length})`,
+		value: embedText,
+		inline: true,
+	});
+
+	// Return
+	return storedFields;
+}
+
+async function getBadgeFields(universeId) {
+	// Memoize
+	let willFetch = false;
+	if (universeBadgeFieldsCache[universeId] == null) {
+		universeBadgeFieldsCache[universeId] = {};
+		willFetch = true;
+	} else {
+		let previousTime = universeBadgeFieldsCache[universeId].time;
+		let elapsedMs = Date.now() - previousTime;
+		if (elapsedMs > reFetchMinutes * 60 * 1000) {
+			willFetch = true;
+		}
+	}
+
+	// Fetch if needed
+	if (willFetch) {
+		try {
+			universeBadgeFieldsCache[universeId].time = Date.now();
+			universeBadgeFieldsCache[universeId] = {
+				fields: await _createBadgeFields(universeId),
+				time: Date.now(),
+			}
+		} catch (error) {
+			throw error;
+		}
+	}
+
+	// Return fields
+	return universeBadgeFieldsCache[universeId].fields;
 }
 
 // Command functions
@@ -158,12 +240,77 @@ async function checkBadgesByPlaceId(inputPlaceId, playerInfo) {
 	return resultBody;
 }
 
+async function listBadgesByPlaceId(inputPlaceId, inputPage = 1) {
+	const failInfo = {
+		resultBody: failBody,
+		pageCount: 0,
+	};
+	
+	// Get universe id
+	let universeId;
+	try {
+		universeId = await getUniverseId(inputPlaceId);
+	} catch (error) {
+		return failInfo;
+	}
+
+	// Get universe name
+	let universeName;
+	try {
+		universeName = await robloxFetchApi.fetchUniverseName(universeId);
+	} catch (error) {
+		return failInfo;
+	}
+	
+	// Get field
+	let badgesEmbedField;
+	let pageCount;
+	let page = parseInt(inputPage);
+	try {
+		// Get fields
+		const storedFields = await getBadgeFields(universeId);
+		
+		// Get page count
+		pageCount = storedFields.length;
+		failInfo.resultBody = createFailBody("Invalid page", `Page ${page} isn't from 1 to ${pageCount}`);
+		failInfo.pageCount = pageCount;
+
+		// Get selected field
+		badgesEmbedField = storedFields[page - 1];
+		badgesEmbedField.name = `Badges (${page}/${pageCount})`;
+	} catch (error) {
+		return failInfo;
+	}
+	
+	// Create result body
+	const resultEmbed = {
+		title: `Badge List`,
+		color: successColor,
+		fields: [badgesEmbedField,],
+	};
+	const resultEmbeds = [resultEmbed];
+	const resultBody = {
+		content: `Badges in [${universeName}](<https://www.roblox.com/games/${inputPlaceId}>)`,
+		embeds: resultEmbeds,
+	}
+
+	// Create result info
+	const resultInfo = {
+		resultBody,
+		pageCount,
+	}
+
+	return resultInfo;
+}
+
 // Function module
 let functionModule = {
 	getUniverseId,
 	checkBadgesByGameName,
 	checkBadgesByPlaceId,
+	listBadgesByPlaceId,
 	gameNames: getGameNames(),
+	gameIds,
 };
 
 export { functionModule };

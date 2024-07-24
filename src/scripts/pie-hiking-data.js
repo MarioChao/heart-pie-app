@@ -67,13 +67,16 @@ const pieSkins = [
 		name: "Moon Pie",
 		description: "Hiking Tool",
 		icon: assetsPrefix + "pies/moon.png",
+		requirements: {
+			badges: [2124804350],
+		},
 	},
 	{
 		name: "Pumpkin Pi",
 		description: "Usually goes up in price during Pi Day",
 		icon: assetsPrefix + "pies/pumpkin.png",
 		requirements: {
-			badges: [2124804350],
+			badges: [2124874992],
 		},
 	},
 	{

@@ -13,3 +13,16 @@ export const failBody = {
 };
 
 export const fieldValueLimit = 1024;
+
+export function createFailBody(title, description) {
+	const resultBody = {
+		embeds: [
+			{
+				title,
+				description,
+				color: 0xED4245,
+			},
+		]
+	};
+	return resultBody
+}

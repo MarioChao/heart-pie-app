@@ -22,6 +22,8 @@ import {
 	VerifyDiscordRequest,
 	getRandomEmoji,
 	DiscordRequest,
+	createTextInputComponent,
+	createPagesActionRowComponent,
 	contextWaitUntil,
 } from "./scripts/utils.js";
 import { getShuffledOptions, getResult } from "./scripts/rps-game.js";
@@ -57,10 +59,19 @@ const deferredEphemeralResponse = {
 		flags: InteractionResponseFlags.EPHEMERAL,
 	},
 };
+
 const deferredNormalResponse = {
 	type: InteractionResponseType.DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE,
 	data: {
 		content: "Loading",
+	},
+};
+
+const componentDeferredEphemeralResponse = {
+	type: InteractionResponseType.DEFERRED_UPDATE_MESSAGE,
+	data: {
+		content: "Loading",
+		flags: InteractionResponseFlags.EPHEMERAL,
 	},
 };
 
@@ -145,9 +156,9 @@ router.post("/interactions", async (request, env, context) => {
 							components: [
 								{
 									type: MessageComponentTypes.BUTTON,
-									custom_id: `accept_button_${id}`,
-									label: "Accept",
 									style: ButtonStyleTypes.PRIMARY,
+									label: "Accept",
+									custom_id: `accept_button_${id}`,
 								},
 							],
 						},
@@ -317,22 +328,63 @@ router.post("/interactions", async (request, env, context) => {
 
 			// Initial response
 			return new JsonResponse(deferredEphemeralResponse);
+		}
 
+		// "listbadges" command
+		if (name === "listbadges") {
+			// Get info
+			const subcommand = data.options[0];
+			const subcommandName = subcommand.name;
+
+			// Defer response
+			contextWaitUntil(context, async () => {
+				// Get result
+				let resultInfo;
+				let placeId;
+				if (subcommandName === "game_name") {
+					const gameName = subcommand.options[0].value;
+					placeId = epicDepartment.gameIds[gameName];
+					resultInfo = await epicDepartment.listBadgesByPlaceId(placeId);
+				} else if (subcommandName === "place_id") {
+					placeId = subcommand.options[0].value;
+					resultInfo = await epicDepartment.listBadgesByPlaceId(placeId);
+				}
+				const resultBody = resultInfo.resultBody;
+				const pageCount = resultInfo.pageCount;
+				const page = 1;
+
+				// Add components
+				const pagesActionRow = createPagesActionRowComponent(page, pageCount, `listbadges_page_${placeId}_`);
+				resultBody.components = [
+					pagesActionRow,
+				];
+
+				// Edit response
+				const endpoint = `webhooks/${env.DISCORD_APPLICATION_ID}/${token}/messages/@original`;
+				await DiscordRequest(endpoint, {
+					method: "PATCH",
+					body: resultBody,
+				});
+			});
+
+			// Initial response
+			return new JsonResponse(deferredEphemeralResponse);
 		}
 	} else if (type === InteractionType.MESSAGE_COMPONENT) {
 		// Get type
 		const componentId = data.custom_id;
 
+		// RPS
 		if (componentId.startsWith("accept_button_")) {
 			/* RPS accept button */
 			// Get game id
 			const gameId = componentId.replace("accept_button_", "");
 
-			// Get message with token
-			const endpoint = `webhooks/${env.DISCORD_APPLICATION_ID}/${token}/messages/${interaction.message.id}`;
 			try {
 				// Delete previous message
 				contextWaitUntil(context, async () => {
+					// Get message with token
+					const endpoint = `webhooks/${env.DISCORD_APPLICATION_ID}/${token}/messages/${interaction.message.id}`;
 					await DiscordRequest(endpoint, { method: "DELETE" });
 				});
 
@@ -382,11 +434,11 @@ router.post("/interactions", async (request, env, context) => {
 			// Remove game
 			delete activeGames[gameId];
 
-			// Get message with token
-			const endpoint = `webhooks/${env.DISCORD_APPLICATION_ID}/${token}/messages/${interaction.message.id}`;
 			try {
 				// Update previous message
 				contextWaitUntil(context, async () => {
+					// Get message with token
+					const endpoint = `webhooks/${env.DISCORD_APPLICATION_ID}/${token}/messages/${interaction.message.id}`;
 					await DiscordRequest(endpoint, {
 						method: "PATCH",
 						body: {
@@ -406,6 +458,99 @@ router.post("/interactions", async (request, env, context) => {
 			} catch (err) {
 				console.error("Error sending message:", err);
 			}
+		}
+
+		// List badges
+		if (componentId.startsWith("listbadges_page")) {
+			// Get info
+			const componentData = componentId.substring("listbadges_page_".length).split("_");
+			const placeId = parseInt(componentData[0]);
+			let page = componentData[1];
+			if (page == "search") {
+				// Modal interaction
+				const inputComponent = createTextInputComponent("Page #", `listbadges_input_${placeId}`, false);
+				const resultBody = {
+					title: "Go to Page",
+					custom_id: `listbadges_modal`,
+					components: [
+						{
+							type: MessageComponentTypes.ACTION_ROW,
+							components: [
+								inputComponent,
+							]
+						}
+					],
+				};
+				return new JsonResponse({
+					type: InteractionResponseType.MODAL,
+					data: resultBody,
+				});
+			}
+			page = parseInt(page);
+
+			// Defer response
+			contextWaitUntil(context, async () => {
+				// Get result info
+				const resultInfo = await epicDepartment.listBadgesByPlaceId(placeId, page);
+				const resultBody = resultInfo.resultBody;
+				const pageCount = resultInfo.pageCount;
+				
+				// Add components
+				const pagesActionRow = createPagesActionRowComponent(page, pageCount, `listbadges_page_${placeId}_`);
+				resultBody.components = [
+					pagesActionRow,
+				];
+
+				// Edit response
+				const interactionEndpoint = `webhooks/${env.DISCORD_APPLICATION_ID}/${token}/messages/${interaction.message.id}`;
+				await DiscordRequest(interactionEndpoint, {
+					method: "PATCH",
+					body: resultBody,
+				});
+			});
+
+			// Initial response
+			return new JsonResponse(componentDeferredEphemeralResponse);
+		}
+	} else if (type === InteractionType.MODAL_SUBMIT) {
+		// Get type
+		const modalId = data.custom_id;
+
+		// List badges
+		if (modalId === "listbadges_modal") {
+			// Get input component
+			const inputActionRow = data.components[0];
+			const inputComponent = inputActionRow.components[0];
+			const inputComponentId = inputComponent.custom_id;
+
+			// Get info
+			const componentData = inputComponentId.substring("listbadges_input_".length).split("_");
+			const placeId = parseInt(componentData[0]);
+			const page = parseInt(inputComponent.value);
+
+			// Defer response
+			contextWaitUntil(context, async () => {
+				// Get result info
+				const resultInfo = await epicDepartment.listBadgesByPlaceId(placeId, page);
+				const resultBody = resultInfo.resultBody;
+				const pageCount = resultInfo.pageCount;
+				
+				// Add components
+				const pagesActionRow = createPagesActionRowComponent(page, pageCount, `listbadges_page_${placeId}_`);
+				resultBody.components = [
+					pagesActionRow,
+				];
+
+				// Edit response
+				const interactionEndpoint = `webhooks/${env.DISCORD_APPLICATION_ID}/${token}/messages/${interaction.message.id}`;
+				await DiscordRequest(interactionEndpoint, {
+					method: "PATCH",
+					body: resultBody,
+				});
+			});
+
+			// Initial response
+			return new JsonResponse(componentDeferredEphemeralResponse);
 		}
 	}
 });
