@@ -55,6 +55,10 @@ const pieHikeGameList = [
 		name: "OToDeath's course",
 		link: "https://www.roblox.com/games/17675518606/wip-pie-game",
 	},
+	{
+		name: "Pie Hiking Difficulty Test",
+		link: "https://www.roblox.com/games/16124983043/Pie-Hiking-Difficulty-Test",
+	},
 ];
 
 const pieSkins = [

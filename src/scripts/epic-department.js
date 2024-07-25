@@ -11,8 +11,9 @@ const gameIds = {
 	"Juke's Tower of Hell": 8562822414,
 };
 
-const reFetchMinutes = 20;
+const reFetchMinutes = 1;
 const universeBadgeFieldsCache = {};
+console.log("restart");
 
 // Local functions
 function getGameNames() {

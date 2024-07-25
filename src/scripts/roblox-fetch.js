@@ -7,7 +7,7 @@ import { functionModule as fetchApi } from "./fetch-api.js";
 // Constants
 
 const badgesPerFetch = 100; // 10, 25, 50, 100
-const reFetchMinutes = 20;
+const reFetchMinutes = 1;
 
 const universeBadgesCache = {};
 
