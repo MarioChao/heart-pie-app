@@ -21,7 +21,6 @@ const usernameOption = {
 	description: 'Player username on Roblox (any if you use user_id)',
 	required: true,
 	max_length: 50,
-	autocomplete: true,
 };
 const userIdOption = {
 	type: 4,
@@ -29,7 +28,6 @@ const userIdOption = {
 	description: 'Player userId on Roblox',
 	required: false,
 	min_value: 1,
-	autocomplete: true,
 };
 
 // Create command choices from array

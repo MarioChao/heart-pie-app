@@ -16,12 +16,24 @@ const pieHikeGameList = [
 		link: "https://www.roblox.com/games/14834601229/High-Hike",
 	},
 	{
-		name: "murphtastic's Rifthiker",
+		name: "murphtastic's RIFTHIKER",
 		link: "https://www.roblox.com/games/16656728068/RIFTHIKER",
 	},
 	{
-		name: "ÆTERNUM*'s Postmortem",
-		link: "https://www.roblox.com/games/16549530059/POSTMORTEM",
+		name: "Pie Hiking Test (POSTMORTEM)",
+		link: "https://www.roblox.com/games/18284886341/Pie-Hiking-Test",
+	},
+	{
+		name: "the hill i could climb (late july, midsummer)",
+		link: "https://www.roblox.com/games/17800487940/the-hill-i-could-climb",
+	},
+	{
+		name: "DALIT's Pie Hiking Difficulty Test",
+		link: "https://www.roblox.com/games/16124983043/Pie-Hiking-Difficulty-Test",
+	},
+	{
+		name: "Epic Department's tournament (private)",
+		link: "https://www.roblox.com/games/9761630409/Pie-Hiking-Tournament",
 	},
 	{
 		name: "hypnasail's hell",
@@ -32,8 +44,8 @@ const pieHikeGameList = [
 		link: "https://www.roblox.com/games/9422644141/pie-video-game",
 	},
 	{
-		name: "Epic Department's tournament (private)",
-		link: "https://www.roblox.com/games/9761630409/Pie-Hiking-Tournament",
+		name: "Pi-ductions's giant m.c. donalds",
+		link: "https://www.roblox.com/games/17580561507/PIE-HIKE-IN-GIANT-M-C-DONALDS",
 	},
 	{
 		name: "rxincarnated's practice",
@@ -54,10 +66,6 @@ const pieHikeGameList = [
 	{
 		name: "OToDeath's course",
 		link: "https://www.roblox.com/games/17675518606/wip-pie-game",
-	},
-	{
-		name: "Pie Hiking Difficulty Test",
-		link: "https://www.roblox.com/games/16124983043/Pie-Hiking-Difficulty-Test",
 	},
 ];
 
