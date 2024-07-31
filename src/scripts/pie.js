@@ -1,8 +1,10 @@
 // Imports
 import { functionModule as robloxFetchApi } from './roblox-fetch.js';
 import { validatePlayerInfo, checkMeetRequirements } from './utils.js';
-import { successColor, failBody, fieldValueLimit } from './embed-constants.js';
-import { pieHikeGameList, pieSkins, pieTypes } from './pie-hiking-data.js'
+import { createFields } from './bot-response-util.js';
+import { successColor, failBody, fieldValueLimit, createFailBody } from './embed-constants.js';
+import { pieSkins, pieTypes } from './pie-baking-data.js'
+import { pieHikeGameList } from './pie-hiking-data.js'
 
 // Variables
 
@@ -108,16 +110,58 @@ function getRandomPieHike() {
 	return gameInfo;
 }
 
-function getAllPieHike() {
-	const gameCount = pieHikeGameList.length;
+async function getAllPieHike(inputPage = 1) {
+	// Initialize fail message
+	const failInfo = {
+		resultBody: failBody,
+		pageCount: 0,
+	};
 
-	// Convert game list to text
-	let resultText = "";
-	resultText += `List of (${gameCount}) pie hiking maps:`;
-	for (const gameInfo of pieHikeGameList) {
-		resultText += `\n* [${gameInfo.name}](<${gameInfo.link}>)`;
+	// Create result text
+	const gameCount = pieHikeGameList.length;
+	const resultText = `Pie Hiking maps (${gameCount})`;
+
+	// Get field
+	let embedField;
+	let pageCount;
+	const page = parseInt(inputPage);
+	try {
+		// Get fields
+		const storedFields = createFields(pieHikeGameList, "Maps", (map) => {
+			return `[${map.name}](${map.link})`;
+		});
+
+		// Get page count
+		pageCount = storedFields.length;
+		failInfo.resultBody = createFailBody("Invalid page", `Page ${page} isn't from 1 to ${pageCount}`);
+		failInfo.pageCount = pageCount;
+
+		// Get selected field
+		embedField = storedFields[page - 1];
+		embedField.name = `Maps (${page}/${pageCount})`;
+	} catch (error) {
+		return failInfo;
 	}
-	return resultText;
+
+	// Create result body
+	const resultEmbed = {
+		title: `Map List`,
+		color: successColor,
+		fields: [embedField,],
+	};
+	const resultEmbeds = [resultEmbed];
+	const resultBody = {
+		content: resultText,
+		embeds: resultEmbeds,
+	}
+
+	// Create result info
+	const resultInfo = {
+		resultBody,
+		pageCount,
+	}
+
+	return resultInfo;
 }
 
 function bakeRandomPie() {
@@ -253,7 +297,7 @@ async function getPies(playerInfo) {
 // Function module
 let functionModule = {
 	hikeRandom: getRandomPieHike,
-	hikeAllText: getAllPieHike,
+	hikeAllInfo: getAllPieHike,
 	bakeRandom: bakeRandomPie,
 	getPies,
 

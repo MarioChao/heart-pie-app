@@ -22,10 +22,12 @@ import {
 	VerifyDiscordRequest,
 	getRandomEmoji,
 	DiscordRequest,
-	createTextInputComponent,
-	createPagesActionRowComponent,
 	contextWaitUntil,
 } from "./scripts/utils.js";
+import {
+	createPagesActionRowComponent,
+	createPagesTextInputModalBody,
+} from "./scripts/bot-response-util.js";
 import { getShuffledOptions, getResult } from "./scripts/rps-game.js";
 import { functionModule as pieHike } from "./scripts/pie.js";
 import { functionModule as epicDepartment } from "./scripts/epic-department.js";
@@ -210,17 +212,30 @@ router.post("/interactions", async (request, env, context) => {
 
 		// "hikeall" command
 		if (name === "hikeall") {
-			// Get maps
-			const resultText = pieHike.hikeAllText();
+			// Defer response
+			contextWaitUntil(context, async () => {
+				// Get result
+				const resultInfo = await pieHike.hikeAllInfo();
+				const resultBody = resultInfo.resultBody;
+				const pageCount = resultInfo.pageCount;
+				const page = 1;
 
-			// Response
-			return new JsonResponse({
-				type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-				data: {
-					content: resultText,
-					flags: InteractionResponseFlags.EPHEMERAL,
-				},
+				// Add components
+				const pagesActionRow = createPagesActionRowComponent(page, pageCount, `hikeall_page_`);
+				resultBody.components = [
+					pagesActionRow,
+				];
+
+				// Edit response
+				const endpoint = `webhooks/${env.DISCORD_APPLICATION_ID}/${token}/messages/@original`;
+				await DiscordRequest(endpoint, {
+					method: "PATCH",
+					body: resultBody,
+				});
 			});
+
+			// Initial response
+			return new JsonResponse(deferredEphemeralResponse);
 		}
 
 		// "bake" command
@@ -303,11 +318,12 @@ router.post("/interactions", async (request, env, context) => {
 				let resultBody;
 				if (subcommandName === "game_name") {
 					const gameName = subcommand.options[0].value;
+					const placeId = epicDepartment.gameIds[gameName];
 					const playerInfo = {
 						username: subcommand.options[1].value,
 						userId: subcommand.options[2] && subcommand.options[2].value,
 					};
-					resultBody = await epicDepartment.checkBadgesByGameName(gameName, playerInfo);
+					resultBody = await epicDepartment.checkBadgesByPlaceId(placeId, playerInfo);
 				} else if (subcommandName === "place_id") {
 					const placeId = subcommand.options[0].value;
 					const playerInfo = {
@@ -371,6 +387,9 @@ router.post("/interactions", async (request, env, context) => {
 			return new JsonResponse(deferredEphemeralResponse);
 		}
 	} else if (type === InteractionType.MESSAGE_COMPONENT) {
+		// Get interaction endpoint
+		const interactionEndpoint = `webhooks/${env.DISCORD_APPLICATION_ID}/${token}/messages/${interaction.message.id}`;
+
 		// Get type
 		const componentId = data.custom_id;
 
@@ -460,6 +479,45 @@ router.post("/interactions", async (request, env, context) => {
 			}
 		}
 
+		// Hike all
+		if (componentId.startsWith("hikeall_page")) {
+			// Get info
+			const componentData = componentId.substring("hikeall_page_".length).split("_"); // modify
+			let page = componentData[0];
+			if (page == "search") {
+				// Modal interaction
+				const resultBody = createPagesTextInputModalBody(`hikeall_input_`, "hikeall_modal");
+				return new JsonResponse({
+					type: InteractionResponseType.MODAL,
+					data: resultBody,
+				});
+			}
+			page = parseInt(page);
+
+			// Defer response
+			contextWaitUntil(context, async () => {
+				// Get result info
+				const resultInfo = await pieHike.hikeAllInfo(page); // modify
+				const resultBody = resultInfo.resultBody;
+				const pageCount = resultInfo.pageCount;
+				
+				// Add components
+				const pagesActionRow = createPagesActionRowComponent(page, pageCount, `hikeall_page_`); // modify
+				resultBody.components = [
+					pagesActionRow,
+				];
+
+				// Edit response
+				await DiscordRequest(interactionEndpoint, {
+					method: "PATCH",
+					body: resultBody,
+				});
+			});
+
+			// Initial response
+			return new JsonResponse(componentDeferredEphemeralResponse);
+		}
+
 		// List badges
 		if (componentId.startsWith("listbadges_page")) {
 			// Get info
@@ -468,19 +526,7 @@ router.post("/interactions", async (request, env, context) => {
 			let page = componentData[1];
 			if (page == "search") {
 				// Modal interaction
-				const inputComponent = createTextInputComponent("Page #", `listbadges_input_${placeId}`, false);
-				const resultBody = {
-					title: "Go to Page",
-					custom_id: `listbadges_modal`,
-					components: [
-						{
-							type: MessageComponentTypes.ACTION_ROW,
-							components: [
-								inputComponent,
-							]
-						}
-					],
-				};
+				const resultBody = createPagesTextInputModalBody(`listbadges_input_${placeId}`, "listbadges_modal");
 				return new JsonResponse({
 					type: InteractionResponseType.MODAL,
 					data: resultBody,
@@ -502,7 +548,6 @@ router.post("/interactions", async (request, env, context) => {
 				];
 
 				// Edit response
-				const interactionEndpoint = `webhooks/${env.DISCORD_APPLICATION_ID}/${token}/messages/${interaction.message.id}`;
 				await DiscordRequest(interactionEndpoint, {
 					method: "PATCH",
 					body: resultBody,
@@ -513,8 +558,46 @@ router.post("/interactions", async (request, env, context) => {
 			return new JsonResponse(componentDeferredEphemeralResponse);
 		}
 	} else if (type === InteractionType.MODAL_SUBMIT) {
+		// Get interaction endpoint
+		const interactionEndpoint = `webhooks/${env.DISCORD_APPLICATION_ID}/${token}/messages/${interaction.message.id}`;
+
 		// Get type
 		const modalId = data.custom_id;
+
+		// Hike all
+		if (modalId === "hikeall_modal"){
+			// Get input component
+			const inputActionRow = data.components[0];
+			const inputComponent = inputActionRow.components[0];
+			const inputComponentId = inputComponent.custom_id;
+
+			// Get info
+			const componentData = inputComponentId.substring("hikeall_input_".length).split("_"); // modify
+			const page = parseInt(inputComponent.value);
+
+			// Defer response
+			contextWaitUntil(context, async () => {
+				// Get result info
+				const resultInfo = await pieHike.hikeAllInfo(page); // modify
+				const resultBody = resultInfo.resultBody;
+				const pageCount = resultInfo.pageCount;
+				
+				// Add components
+				const pagesActionRow = createPagesActionRowComponent(page, pageCount, `hikeall_page_`); // modify
+				resultBody.components = [
+					pagesActionRow,
+				];
+
+				// Edit response
+				await DiscordRequest(interactionEndpoint, {
+					method: "PATCH",
+					body: resultBody,
+				});
+			});
+
+			// Initial response
+			return new JsonResponse(componentDeferredEphemeralResponse);
+		}
 
 		// List badges
 		if (modalId === "listbadges_modal") {
@@ -542,7 +625,6 @@ router.post("/interactions", async (request, env, context) => {
 				];
 
 				// Edit response
-				const interactionEndpoint = `webhooks/${env.DISCORD_APPLICATION_ID}/${token}/messages/${interaction.message.id}`;
 				await DiscordRequest(interactionEndpoint, {
 					method: "PATCH",
 					body: resultBody,

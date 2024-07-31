@@ -37,7 +37,7 @@ function createCommandChoices(choiceArray) {
 
 	for (const choice of choices) {
 		commandChoices.push({
-			name: capitalize(choice),
+			name: choice,
 			value: choice,
 		});
 	}

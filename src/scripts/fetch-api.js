@@ -1,4 +1,5 @@
 // Fetch functions
+
 async function fetchUrl(apiUrl, urlParameters, requestOptions) {
 	// Put parameters
 	if (urlParameters) {

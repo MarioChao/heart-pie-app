@@ -2,22 +2,18 @@
 import { functionModule as robloxFetchApi } from './roblox-fetch.js';
 import { validatePlayerInfo } from './utils.js';
 import { successColor, failBody, fieldValueLimit, createFailBody } from './embed-constants.js';
+import { savedGamePlaceIds } from './game-data.js';
 
 // Constants
-const gameIds = {
-	"Dream Game": 5475056496,
-	"The Forge and the Crucible": 6989453447,
-	"The Roulette Saloon": 6787210828,
-	"Juke's Tower of Hell": 8562822414,
-};
 
 const reFetchMinutes = 1;
 const universeBadgeFieldsCache = {};
 console.log("restart");
 
 // Local functions
+
 function getGameNames() {
-	const gameNames = Object.keys(gameIds);
+	const gameNames = Object.keys(savedGamePlaceIds);
 	return gameNames;
 }
 
@@ -110,11 +106,6 @@ async function getUniverseId(inputPlaceId) {
 		return failBody;
 	}
 	return universeId;
-}
-
-async function checkBadgesByGameName(gameName, playerInfo) {
-	const placeId = gameIds[gameName];
-	return checkBadgesByPlaceId(placeId, playerInfo);
 }
 
 async function checkBadgesByPlaceId(inputPlaceId, playerInfo) {
@@ -266,7 +257,7 @@ async function listBadgesByPlaceId(inputPlaceId, inputPage = 1) {
 	// Get field
 	let badgesEmbedField;
 	let pageCount;
-	let page = parseInt(inputPage);
+	const page = parseInt(inputPage);
 	try {
 		// Get fields
 		const storedFields = await getBadgeFields(universeId);
@@ -307,11 +298,10 @@ async function listBadgesByPlaceId(inputPlaceId, inputPage = 1) {
 // Function module
 let functionModule = {
 	getUniverseId,
-	checkBadgesByGameName,
 	checkBadgesByPlaceId,
 	listBadgesByPlaceId,
 	gameNames: getGameNames(),
-	gameIds,
+	gameIds: savedGamePlaceIds,
 };
 
 export { functionModule };

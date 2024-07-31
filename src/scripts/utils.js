@@ -61,47 +61,6 @@ export async function InstallGlobalCommands(appId, commands) {
 	}
 }
 
-export function createButtonComponent(label, customId, disabled, buttonStyle = ButtonStyleTypes.SECONDARY) {
-	const component = {
-		type: MessageComponentTypes.BUTTON,
-		style: buttonStyle,
-		label,
-		custom_id: customId,
-		disabled,
-	};
-	return component;
-}
-
-export function createTextInputComponent(label, customId, required) {
-	const component = {
-		type: MessageComponentTypes.INPUT_TEXT,
-		style: TextStyleTypes.SHORT,
-		label,
-		custom_id: customId,
-		required,
-	};
-	return component;
-}
-
-export function createPagesActionRowComponent(page, pageCount, buttonIdText, replacePattern = "$") {
-	const regex = new RegExp(replacePattern, "g");
-	const initialComponents = [
-		createButtonComponent("1", buttonIdText.replace(regex, "01"), page == 1),
-		createButtonComponent("◀", buttonIdText.replace(regex, `${page - 1}`), page <= 1),
-		createButtonComponent("...", buttonIdText.replace(regex, "search")),
-		createButtonComponent("▶", buttonIdText.replace(regex, `${page + 1}`), page >= pageCount),
-		createButtonComponent(`${pageCount}`, buttonIdText.replace(regex, `00${pageCount}`), page == pageCount),
-	];
-
-	const finalComponent = {
-		type: MessageComponentTypes.ACTION_ROW,
-		components: initialComponents,
-	};
-
-	return finalComponent;
-}
-
-
 export function contextWaitUntil(context, callback) {
 	const promise = new Promise(async (resolve, reject) => {
 		try {
