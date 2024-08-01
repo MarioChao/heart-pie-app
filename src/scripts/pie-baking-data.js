@@ -91,7 +91,7 @@ const pieSkins = [
 	{
 		name: "Robin's Key Lime Pie",
 		description: "Legend says Robin's blood is 77% brew.",
-		icon: assetsPrefix + "pies/placeholder.png",
+		icon: assetsPrefix + "pies/robin-key-lime.png",
 		requirements: {
 			badges: [2124874992],
 		},
