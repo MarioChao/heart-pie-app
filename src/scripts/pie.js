@@ -262,7 +262,7 @@ async function getPies(playerInfo) {
 		const skinInfo = ownedPieSkins[i];
 		let addText = `${skinInfo.name}`;
 		if (i > 0) {
-			if (i % 4 == 0) {
+			if (i % 3 == 0) {
 				addText = `,\n${addText}`;
 			} else {
 				addText = `, ${addText}`;

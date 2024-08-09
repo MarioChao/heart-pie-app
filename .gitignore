@@ -170,3 +170,7 @@ dist
 
 .dev.vars
 .wrangler/
+
+# DS Store
+
+.DS_Store

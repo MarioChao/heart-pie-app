@@ -89,6 +89,14 @@ const pieHikeGameList = [
 		name: "drumpiece's classic maps",
 		link: "https://www.roblox.com/users/90807940/profile#!/creations",
 	},
+	{
+		name: "solastroid's bare hike",
+		link: "https://www.roblox.com/games/18857871574/solasts-bare-hike",
+	},
+	{
+		name: "Angry_bird055's pie hiking game",
+		link: "https://www.roblox.com/games/18856682297/Pie-Hiking-Game#!/about",
+	},
 ];
 
 export { pieHikeGameList };
