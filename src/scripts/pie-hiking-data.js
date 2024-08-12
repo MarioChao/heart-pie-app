@@ -66,16 +66,16 @@ const pieHikeGameList = [
 		link: "https://www.roblox.com/games/17675518606/wip-pie-game",
 	},
 	{
+		name: "Pi-ductions's Giant M.C. Donalds",
+		link: "https://www.roblox.com/games/17580561507/PIE-HIKE-IN-GIANT-M-C-DONALDS",
+	},
+	{
 		name: "altaccountbutimgreat's Mt. Roblox",
 		link: "https://www.roblox.com/games/15236929541/Mt-Roblox",
 	},
 	{
 		name: "altaccountbutimgreat's skill test",
 		link: "https://www.roblox.com/games/15255612277/Pie-hiking-skill-test",
-	},
-	{
-		name: "Pi-ductions's Giant M.C. Donalds",
-		link: "https://www.roblox.com/games/17580561507/PIE-HIKE-IN-GIANT-M-C-DONALDS",
 	},
 	{
 		name: "RaxRip's Pie Fly",
@@ -90,12 +90,24 @@ const pieHikeGameList = [
 		link: "https://www.roblox.com/users/90807940/profile#!/creations",
 	},
 	{
-		name: "solastroid's bare hike",
+		name: "solastroid's Bare Hike",
 		link: "https://www.roblox.com/games/18857871574/solasts-bare-hike",
 	},
 	{
-		name: "Angry_bird055's pie hiking game",
+		name: "Angry_bird055's Pie Hiking Game",
 		link: "https://www.roblox.com/games/18856682297/Pie-Hiking-Game#!/about",
+	},
+	{
+		name: "speccker1's Mt. Roblox Remastered",
+		link: "https://www.roblox.com/games/14878029363/Mt-Roblox-Pie-Hiking-Remastered",
+	},
+	{
+		name: "Jovancece's International Pie Hiking Sportsclub",
+		link: "https://www.roblox.com/games/7212271492/International-Pie-Hiking-Sportsclub",
+	},
+	{
+		name: "BlueSphereOfDoom's Mt. Frectonick",
+		link: "https://www.roblox.com/games/18510872004/Climb-Mt-Frectonick-with-Pie-400M",
 	},
 ];
 
