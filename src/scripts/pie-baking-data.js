@@ -17,14 +17,6 @@ const pieSkins = [
 		},
 	},
 	{
-		name: "Pumpkin Pi",
-		description: "Usually goes up in price during Pi Day.",
-		icon: assetsPrefix + "pies/pumpkin.png",
-		requirements: {
-			badges: [2124874992],
-		},
-	},
-	{
 		name: "Eye of The Pie",
 		description: "An achievement in the scope of our smallness.",
 		icon: assetsPrefix + "pies/eye.png",
@@ -54,6 +46,22 @@ const pieSkins = [
 		icon: assetsPrefix + "pies/blueberry.png",
 		requirements: {
 			badges: [2127610756],
+		},
+	},
+	{
+		name: "Pumpkin Pi",
+		description: "Usually goes up in price during Pi Day.",
+		icon: assetsPrefix + "pies/pumpkin.png",
+		requirements: {
+			badges: [2124874992],
+		},
+	},
+	{
+		name: "Noden's Overgrown Pie",
+		description: "This type of pie once existed in some ancient cultures, but it became so obscure within them that it is now completely alien and separated from any cultural origin.",
+		icon: assetsPrefix + "pies/noden-overgrown.png",
+		requirements: {
+			badges: [2126097921],
 		},
 	},
 	{

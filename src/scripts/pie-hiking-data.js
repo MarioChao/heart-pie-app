@@ -82,8 +82,8 @@ const pieHikeGameList = [
 		link: "https://www.roblox.com/games/17592988335/High-Pie-Fly",
 	},
 	{
-		name: "drumpiece's Mountain Test",
-		link: "https://www.roblox.com/games/17293971450/Pie-Hike-Mountain-Test",
+		name: "drumpiece's OASIS OF THE WIND",
+		link: "https://www.roblox.com/games/17523179808/OASIS-OF-THE-WIND",
 	},
 	{
 		name: "drumpiece's classic maps",
