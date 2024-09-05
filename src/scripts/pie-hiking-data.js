@@ -109,6 +109,10 @@ const pieHikeGameList = [
 		name: "BlueSphereOfDoom's Mt. Frectonick",
 		link: "https://www.roblox.com/games/18510872004/Climb-Mt-Frectonick-with-Pie-400M",
 	},
+	{
+		name: "Bloxxer League United's Pie Hiking Practice",
+		link: "https://www.roblox.com/games/18857489393/Pie-Hike-Practice-Place",
+	}
 ];
 
 export { pieHikeGameList };
