@@ -1,6 +1,6 @@
 // Constants
 
-const assetsPrefix = "https://mariochao.github.io/heart-pie-app/src/assets/"
+const assetsPrefix = "https://mariochao.github.io/heart-pie-app/src/assets/";
 
 const pieSkins = [
 	{

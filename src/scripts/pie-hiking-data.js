@@ -137,6 +137,11 @@ const pieHikeGameList = [
 		creator: "BlueSphereOfDoom",
 	},
 	{
+		name: "PIE TESTING ROOM π",
+		link: "https://www.roblox.com/games/18401916983/PIE-TESTING-ROOM",
+		creator: "BlueSphereOfDoom",
+	},
+	{
 		name: "Pie Hike Practice Place",
 		link: "https://www.roblox.com/games/18857489393/Pie-Hike-Practice-Place",
 		creator: "Bloxxer League United",
