@@ -128,7 +128,7 @@ async function getAllPieHike(inputPage = 1) {
 	try {
 		// Get fields
 		const storedFields = createFields(pieHikeGameList, "Maps", (map) => {
-			return `[${map.name}](${map.link})`;
+			return `${map.creator} - [${map.name}](${map.link})`;
 		});
 
 		// Get page count
