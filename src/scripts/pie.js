@@ -4,13 +4,20 @@ import { validatePlayerInfo, checkMeetRequirements } from './utils.js';
 import { createFields } from './bot-response-util.js';
 import { successColor, failBody, fieldValueLimit, createFailBody } from './embed-constants.js';
 import { pieSkins, pieTypes } from './pie-baking-data.js';
-import { pieHikeGameList } from './pie-hiking-data.js';
+// import { pieHikeGameList } from './pie-hiking-data.js';
 
 // Variables
+
+let pieHikeGameList = []
 
 let cachedPieBadgeIds;
 
 // Local functions
+
+async function updatePieHikeGames() {
+	const fetchResponse = await fetch("https://mariochao.github.io/dream-game/src/assets/data/pie-hiking-maps.json");
+	pieHikeGameList = await fetchResponse.json();
+}
 
 function getRandomPieSkin() {
 	// Get skin
@@ -103,7 +110,10 @@ function checkOwned(info, userId, statistics) {
 
 // Command functions
 
-function getRandomPieHike() {
+async function getRandomPieHike() {
+	// Update pie hiking games
+	await updatePieHikeGames();
+
 	// Get map
 	const gameIndex = Math.floor(Math.random() * pieHikeGameList.length);
 	const gameInfo = pieHikeGameList[gameIndex];
@@ -116,6 +126,9 @@ async function getAllPieHike(inputPage = 1) {
 		resultBody: failBody,
 		pageCount: 0,
 	};
+
+	// Update pie hiking games
+	await updatePieHikeGames();
 
 	// Create result text
 	const gameCount = pieHikeGameList.length;

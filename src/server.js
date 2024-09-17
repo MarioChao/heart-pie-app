@@ -196,18 +196,27 @@ router.post("/interactions", async (request, env, context) => {
 		/* Pie hiking commands */
 		// "hike" command
 		if (name === "hike") {
-			// Get map
-			const resultGame = pieHike.hikeRandom();
-			const resultText = `${resultGame.name}\n\n${resultGame.link}`;
+			// Defer response
+			contextWaitUntil(context, async () => {
+				// Get map
+				const resultGame = await pieHike.hikeRandom();
+				const resultText = `${resultGame.name}\n\n${resultGame.link}`;
 
-			// Response
-			return new JsonResponse({
-				type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-				data: {
+				// Result body
+				const resultBody = {
 					content: resultText,
-					flags: InteractionResponseFlags.EPHEMERAL,
-				},
+				};
+	
+				// Edit response
+				const endpoint = `webhooks/${env.DISCORD_APPLICATION_ID}/${token}/messages/@original`;
+				await DiscordRequest(endpoint, {
+					method: "PATCH",
+					body: resultBody,
+				});
 			});
+
+			// Initial response
+			return new JsonResponse(deferredEphemeralResponse);
 		}
 
 		// "hikeall" command
