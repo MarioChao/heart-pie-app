@@ -4,7 +4,6 @@ import { validatePlayerInfo, checkMeetRequirements } from './utils.js';
 import { createFields } from './bot-response-util.js';
 import { successColor, failBody, fieldValueLimit, createFailBody } from './embed-constants.js';
 import { pieSkins, pieTypes } from './pie-baking-data.js';
-// import { pieHikeGameList } from './pie-hiking-data.js';
 
 // Variables
 
