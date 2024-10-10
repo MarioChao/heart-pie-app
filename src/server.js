@@ -252,7 +252,7 @@ router.post("/interactions", async (request, env, context) => {
 			// Defer response
 			contextWaitUntil(context, async () => {
 				// Get pie
-				const resultText = pieHike.bakeRandom();
+				const resultText = await pieHike.bakeRandom();
 	
 				// Result body
 				const resultBody = {

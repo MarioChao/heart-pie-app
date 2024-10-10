@@ -3,19 +3,41 @@ import { functionModule as robloxFetchApi } from './roblox-fetch.js';
 import { validatePlayerInfo, checkMeetRequirements } from './utils.js';
 import { createFields } from './bot-response-util.js';
 import { successColor, failBody, fieldValueLimit, createFailBody } from './embed-constants.js';
-import { pieSkins, pieTypes } from './pie-baking-data.js';
 
 // Variables
 
-let pieHikeGameList = []
+const hikingMapsUrl = "https://mariochao.github.io/dream-game/src/assets/data/pie-hiking-maps.json";
+const pieDataUrl = "https://mariochao.github.io/dream-game/src/assets/data/pies.json";
+
+let pieHikeGameList = [];
+
+let pieSkins = [], pieTypes = [];
 
 let cachedPieBadgeIds;
 
 // Local functions
 
 async function updatePieHikeGames() {
-	const fetchResponse = await fetch("https://mariochao.github.io/dream-game/src/assets/data/pie-hiking-maps.json");
+	const fetchResponse = await fetch(hikingMapsUrl);
 	pieHikeGameList = await fetchResponse.json();
+}
+
+async function updatePieData() {
+	const fetchResponse = await fetch(pieDataUrl);
+	const pieData = await fetchResponse.json();
+	const assetsPrefix = pieData.assetsPrefix;
+	pieSkins = pieData.skins;
+	pieTypes = pieData.types;
+	for (const pieSkin of pieSkins) {
+		if (pieSkin.icon) {
+			pieSkin.icon = assetsPrefix + pieSkin.icon;
+		}
+	}
+	for (const pieType of pieTypes) {
+		if (pieType.icon) {
+			pieType.icon = assetsPrefix + pieType.icon;
+		}
+	}
 }
 
 function getRandomPieSkin() {
@@ -176,7 +198,10 @@ async function getAllPieHike(inputPage = 1) {
 	return resultInfo;
 }
 
-function bakeRandomPie() {
+async function bakeRandomPie() {
+	// Update pie data
+	await updatePieData();
+
 	// Get pie info
 	const pieTypeInfo = getRandomWeightedPieType();
 	const pieTypeName = pieTypeInfo.name;
@@ -210,6 +235,9 @@ function bakeRandomPie() {
 }
 
 async function getPies(playerInfo) {
+	// Update pie data
+	await updatePieData();
+
 	// Get player information
 	try {
 		playerInfo = await validatePlayerInfo(playerInfo);
@@ -312,7 +340,6 @@ let functionModule = {
 	hikeAllInfo: getAllPieHike,
 	bakeRandom: bakeRandomPie,
 	getPies,
-
 };
 
 export { functionModule };
