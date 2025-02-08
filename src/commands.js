@@ -1,6 +1,7 @@
 // Registering commands
 
 // Run from the command line
+// "node ./src/commands.js"
 
 // Imports
 
