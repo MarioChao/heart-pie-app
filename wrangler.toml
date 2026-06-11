@@ -1,5 +1,11 @@
 #:schema node_modules/wrangler/config-schema.json
 name = "heart-pie"
 main = "src/server.js"
-compatibility_date = "2024-07-12"
-node_compat = true
+compatibility_date = "2024-09-23"
+compatibility_flags = [ "nodejs_compat" ]
+
+[observability.logs]
+enabled = true
+invocation_logs = true
+
+[observability.traces]

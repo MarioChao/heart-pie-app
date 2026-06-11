@@ -2,7 +2,7 @@
 import { functionModule as robloxFetchApi } from './roblox-fetch.js';
 import { validatePlayerInfo, checkMeetRequirements } from './utils.js';
 import { createFields } from './bot-response-util.js';
-import { successColor, failBody, fieldValueLimit, createFailBody } from './embed-constants.js';
+import { successColor, fieldValueLimit, createFailBody } from './embed-constants.js';
 
 // Variables
 
@@ -144,7 +144,7 @@ async function getRandomPieHike() {
 async function getAllPieHike(inputPage = 1) {
 	// Initialize fail message
 	const failInfo = {
-		resultBody: failBody,
+		resultBody: createFailBody("Error", ""),
 		pageCount: 0,
 	};
 
@@ -167,7 +167,7 @@ async function getAllPieHike(inputPage = 1) {
 
 		// Get page count
 		pageCount = storedFields.length;
-		failInfo.resultBody = createFailBody("Invalid page", `Page ${page} isn't from 1 to ${pageCount}`);
+		failInfo.resultBody = createFailBody("Invalid page", `Page ${page} isn't from 1 to ${pageCount}.`);
 		failInfo.pageCount = pageCount;
 
 		// Get selected field
@@ -242,7 +242,7 @@ async function getPies(playerInfo) {
 	try {
 		playerInfo = await validatePlayerInfo(playerInfo);
 	} catch (error) {
-		return failBody;
+		return createFailBody("Error", "Error in getting player information.");
 	}
 	let username = playerInfo.username;
 	let userId = playerInfo.userId;
@@ -255,7 +255,7 @@ async function getPies(playerInfo) {
 			badgeOwned[badgeId] = true
 		}
 	} catch (error) {
-		return failBody;
+		return createFailBody("Error", "Error in getting awarded badges.");
 	}
 
 	// Create statistics

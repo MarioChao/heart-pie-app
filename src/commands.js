@@ -1,7 +1,11 @@
 // Registering commands
 
-// Run from the command line
-// "node ./src/commands.js"
+/**
+ * Run from the command line
+ * - "node ./src/commands.js"
+ * 
+ * More about commands: https://docs.discord.com/developers/interactions/application-commands#application-command-object
+ */
 
 // Imports
 
@@ -128,7 +132,7 @@ const GETPIES_COMMAND = {
 };
 
 // Epic Department commands
-const UNIVERSEID_COMMAND = {
+const UNIVERSE_ID_COMMAND = {
 	type: 1,
 	name: 'getuniverseid',
 	description: 'Get the universe id of a Roblox place',
@@ -137,6 +141,20 @@ const UNIVERSEID_COMMAND = {
 			type: 4,
 			name: 'place_id',
 			description: "The game's place id",
+			required: true,
+		}
+	]
+}
+
+const USER_ID_COMMAND = {
+	type: 1,
+	name: 'getuserid',
+	description: "Get a player's user id from username",
+	options: [
+		{
+			type: 3,
+			name: 'username',
+			description: "The player's username",
 			required: true,
 		}
 	]
@@ -217,8 +235,11 @@ const LIST_BADGES_COMMAND = {
 };
 
 // Install commands globally
-const ALL_COMMANDS = [ENCODE_COMMAND, DECODE_COMMAND,
+const ALL_COMMANDS = [
+	ENCODE_COMMAND, DECODE_COMMAND,
 	PIEHIKE_COMMAND, PIEHIKEALL_COMMAND, PIEBAKE_COMMAND, GETPIES_COMMAND,
-	UNIVERSEID_COMMAND, CHECK_BADGES_COMMAND, LIST_BADGES_COMMAND];
+	UNIVERSE_ID_COMMAND, USER_ID_COMMAND,
+	CHECK_BADGES_COMMAND, LIST_BADGES_COMMAND
+];
 
 InstallGlobalCommands(process.env.DISCORD_APPLICATION_ID, ALL_COMMANDS);

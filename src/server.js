@@ -97,6 +97,7 @@ router.post("/interactions", async (request, env, context) => {
 		request,
 		env,
 	);
+	console.log("[server]: Received interaction!");
 	if (!isValid || !interaction) {
 		return new Response('Bad request signature.', { status: 401 });
 	}
@@ -315,6 +316,25 @@ router.post("/interactions", async (request, env, context) => {
 			});
 		}
 
+		// "getuserid" command
+		if (name === "getuserid") {
+			// Get info
+			const username = data.options[0].value;
+
+			// Get user id
+			const userId = await epicDepartment.getUserId(username);
+			const resultText = `\`${userId}\``;
+
+			// Response
+			return new JsonResponse({
+				type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+				data: {
+					content: resultText,
+					flags: InteractionResponseFlags.EPHEMERAL,
+				},
+			});
+		}
+
 		// "checkbadges" command
 		if (name === "checkbadges") {
 			// Get info
@@ -341,6 +361,7 @@ router.post("/interactions", async (request, env, context) => {
 					};
 					resultBody = await epicDepartment.checkBadgesByPlaceId(placeId, playerInfo);
 				}
+				console.log("[server]: Check badges done.");
 				console.log(resultBody);
 				
 				// Edit response

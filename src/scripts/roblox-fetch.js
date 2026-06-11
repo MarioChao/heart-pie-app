@@ -1,7 +1,7 @@
 // Roblox fetch script
 
 // Imports
-
+import { env } from "cloudflare:workers";
 import { functionModule as fetchApi } from "./fetch-api.js";
 
 // Constants
@@ -85,7 +85,7 @@ async function _fetchBadges(universeId) {
 		for (const badge of pageBadgeList) {
 			badgeList.push(badge);
 		}
-		console.log(`Fetched badges: ${badgeList.length}`);
+		console.log(`[roblox-fetch]: Fetched badges: ${badgeList.length}.`);
 
 		// Next page
 		let nextPageCursor = data.nextPageCursor;
@@ -146,7 +146,7 @@ async function fetchBadgesByUniverseId(universeId) {
  * @param {[number]} badgeIds A list of Roblox badge ids
  * @returns The info and dates of the badges that the player owns from the given badges
  */
-async function fetchBadgeAwardedDates(userId, badgeIds) {
+async function fetchBadgeAwardedDates_unused(userId, badgeIds) {
 	// Set up api
 	const apiUrl = `https://badges.roblox.com/v1/users/${userId}/badges/awarded-dates`;
 	const urlParams = new URLSearchParams();
@@ -178,17 +178,73 @@ async function fetchBadgeAwardedDates(userId, badgeIds) {
  * 
  * @param {number} userId A player user id
  * @param {[number]} badgeIds A list of Roblox badge ids
+ * @returns The info of the badges that the player owns from the given badges
+ */
+async function fetchInventoryBadges(userId, badgeIds) {
+	console.log(`[roblox-fetch]: Called fetchInventoryBadges.`);
+
+	// Get api key
+	const apiKey = env.READ_INVENTORY_KEY;
+	if (!apiKey) {
+		console.log('[roblox-fetch]: No api key found!');
+		throw new Error('Missing api key.');
+	}
+
+	// Set up api
+	const apiUrl = `https://apis.roblox.com/cloud/v2/users/${userId}/inventory-items`;
+	const urlParams = new URLSearchParams();
+	const requestOptions = {
+		headers: {
+			"x-api-key": apiKey,
+		}
+	};
+
+	// Fetch 100 badges (limit) at a time
+	const ownedBadges = [];
+	console.log(`[roblox-fetch]: Fetching inventory badges...`);
+	console.log(`[roblox-fetch]: Api key: ${String(apiKey).substring(0, 3)}...`);
+	for (let i = 0; i < badgeIds.length; i += 100) {
+		// Set url params
+		const badgeIdsString = badgeIds.slice(i, i + 100).join(",");
+		const filterString = `badgeIds=${badgeIdsString}`;
+		urlParams.set("maxPageSize", 100);
+		urlParams.set("filter", filterString);
+	
+		// Fetch data
+		let data;
+		try {
+			data = await fetchApi.fetchUrl(apiUrl, urlParams, requestOptions);
+		} catch (error) {
+			throw error;
+		}
+		const fetchResult = data.inventoryItems;
+		for (const badge of fetchResult) {
+			ownedBadges.push(badge);
+		}
+	}
+	console.log(`[roblox-fetch]: Done fetching inventory badges!`);
+
+	// Return awarded dates
+	return ownedBadges;
+}
+
+/**
+ * 
+ * @param {number} userId A player user id
+ * @param {[number]} badgeIds A list of Roblox badge ids
  * @returns The list of badge ids that the player owns from the given badges
  */
 async function fetchAwardedBadgeIds(userId, badgeIds) {
+	console.log(`[roblox-fetch]: Called fetchAwardedBadgeIds.`);
+
 	let awardedBadgeIds = [];
 	try {
-		// Fetch badge awarded dates
-		const badgeAwardedDates = await fetchBadgeAwardedDates(userId, badgeIds);
+		// Fetch owned badges
+		const ownedBadges = await fetchInventoryBadges(userId, badgeIds);
 
-		// Get awarded badge ids
-		badgeAwardedDates.forEach((value) => {
-			awardedBadgeIds.push(value.badgeId)
+		// Get badge ids
+		ownedBadges.forEach((value) => {
+			awardedBadgeIds.push(parseInt(value.badgeDetails.badgeId));
 		});
 	} catch (error) {
 		throw error;
@@ -272,7 +328,7 @@ const functionModule = {
 	fetchUniverseId,
 	fetchUniverseName,
 	fetchBadgesByUniverseId,
-	fetchBadgeAwardedDates,
+	fetchInventoryBadges,
 	fetchAwardedBadgeIds,
 	fetchPlayer,
 	fetchUsers,

@@ -10,7 +10,7 @@ const savedGamePlaceIds = {
 	"Dream Game": 5475056496,
 	"Dream Universe": 12931465480,
 	"DREAM WORLD": 3957129026,
-	"Eternal Tower of Hell": 8562822414,
+	"Eternal Towers of Hell": 8562822414,
 	"High Hike": 14834601229,
 	"Inver~o": 13621526714,
 	"late july, midsummer": 14107732720,

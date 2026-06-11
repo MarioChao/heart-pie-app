@@ -6,7 +6,7 @@ async function fetchUrl(apiUrl, urlParameters, requestOptions) {
 		const searchParams = new URLSearchParams(urlParameters);
 		apiUrl += "?" + searchParams.toString();
 	}
-	console.log("Fetching");
+	console.log("[fetch-api]: Fetching...");
 
 	const request = new Request(apiUrl, requestOptions);
 
@@ -20,16 +20,18 @@ async function fetchUrl(apiUrl, urlParameters, requestOptions) {
 			  headers: request.headers,
 			  method: "GET",
 			});
-	
+
 			const cache = caches.default;
+			console.log("[fetch-api]: Cached result:");
 			console.log(cache);
+
 			// Find the cache key in the cache
 			let response = await cache.match(cacheKey);
 			if (!response) {
 				response = await fetch(request);
 				cache.put(cacheKey, response.clone());
 			} else {
-				console.log("fetch cached");
+				console.log("[fetch-api]: Fetch cached.");
 			}
 			return response.json();
 		}
@@ -37,7 +39,7 @@ async function fetchUrl(apiUrl, urlParameters, requestOptions) {
 		// Fetch
 		const response = await fetch(request);
 		if (!response.ok) {
-			throw new Error("Could not fetch resources");
+			throw new Error("[fetch-api]: Could not fetch resources.");
 		}
 
 		const data = await response.json();

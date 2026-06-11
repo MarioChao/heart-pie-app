@@ -15,6 +15,7 @@ Here is a list of commands in the bot:
 | Pie | `/bake` | Bake a random pie |
 | Pie | `/getpies` | Get the pies that a player owns (in dreamsphere) |
 | Epic Department | `/getuniverseid` | Get the universe id of a Roblox place |
+| Epic Department | `/getuserid` | Get a player's user id from username |
 | Epic Department | `/checkbadges` | Check a player's owned badges in a game |
 | Epic Department | `/listbadges` | List out the badges of a game |
 | Encoding | `/encode` | Encode a message using base64 |

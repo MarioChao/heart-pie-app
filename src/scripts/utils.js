@@ -1,5 +1,5 @@
 // Imports
-import 'dotenv/config';
+import { env } from "cloudflare:workers";
 import {
 	verifyKey,
 	MessageComponentTypes,
@@ -31,7 +31,7 @@ export async function DiscordRequest(endpoint, options) {
 	// Use fetch to make requests
 	const res = await fetch(url, {
 		headers: {
-			Authorization: `Bot ${process.env.DISCORD_TOKEN}`,
+			Authorization: `Bot ${env.DISCORD_TOKEN}`,
 			'Content-Type': 'application/json; charset=UTF-8',
 		},
 		...options
@@ -40,6 +40,7 @@ export async function DiscordRequest(endpoint, options) {
 	// throw API errors
 	if (!res.ok) {
 		const data = await res.json();
+		console.log("[utils]: Discord request failed.");
 		console.log(res.status);
 		throw new Error(JSON.stringify(data));
 	}
@@ -55,7 +56,7 @@ export async function InstallGlobalCommands(appId, commands) {
 	try {
 		// This is calling the bulk overwrite endpoint: https://discord.com/developers/docs/interactions/application-commands#bulk-overwrite-global-application-commands
 		const response = await DiscordRequest(endpoint, { method: 'PUT', body: commands });
-		console.log('Registered all commands');
+		console.log('[utils]: Registered all commands.');
 	} catch (err) {
 		console.error(err);
 	}
@@ -86,6 +87,7 @@ export async function validatePlayerInfo(playerInfo) {
 	if (!userId) {
 		// Get player userId
 		try {
+			console.log(`[utils]: Fetching user id for ${username}.`);
 			userId = await robloxFetchApi.fetchUserId(username);
 		} catch (error) {
 			throw error;
@@ -95,6 +97,7 @@ export async function validatePlayerInfo(playerInfo) {
 	// Get player username
 	let player;
 	try {
+		console.log(`[utils]: Fetching username for user id ${userId}.`);
 		player = await robloxFetchApi.fetchPlayer(userId);
 	} catch (error) {
 		throw error;
@@ -142,4 +145,12 @@ export function getRandomEmoji() {
 
 export function capitalize(str) {
 	return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+export function printEnvKeynames() {
+	let envKeynames = [];
+	for (const str of Object.keys(env)) {
+		envKeynames.push(str);
+	}
+	console.log(`[utils]: Env keynames: ${envKeynames.join(',')}`);
 }
