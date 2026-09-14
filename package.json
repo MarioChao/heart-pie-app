@@ -18,5 +18,12 @@
     "itty-router": "^5.0.17",
     "ngrok": "^5.0.0-beta.2",
     "wrangler": "^4.54.0"
+  },
+  "allowScripts": {
+    "fsevents@2.3.3": true,
+    "sharp@0.33.5": true,
+    "esbuild@0.28.1": true,
+    "workerd@1.20260911.1": true,
+    "ngrok@5.0.0-beta.2": true
   }
 }

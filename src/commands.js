@@ -11,8 +11,8 @@
 
 import dotenv from 'dotenv';
 import { getRPSChoices } from './scripts/rps-game.js';
-import { functionModule as epicDepartment } from './scripts/epic-department.js';
-import { capitalize, InstallGlobalCommands } from './scripts/utils.js';
+import { utils } from './command-scripts/utils.js';
+import { gameData } from './command-scripts/game-data.js';
 
 // Local environment
 
@@ -23,16 +23,16 @@ dotenv.config({ path: '.dev.vars' });
 const usernameOption = {
 	type: 3,
 	name: 'username',
-	description: 'Player username on Roblox (any if you use user_id)',
-	required: true,
+	description: 'Player username on Roblox',
+	required: false,
 	max_length: 50,
 };
 const userIdOption = {
 	type: 4,
 	name: 'user_id',
-	description: 'Player userId on Roblox',
-	required: false,
-	min_value: 1,
+	description: 'Player userId on Roblox (enter 0 to use username)',
+	required: true,
+	min_value: 0,
 };
 
 // Create command choices from array
@@ -126,8 +126,8 @@ const GETPIES_COMMAND = {
 	name: 'getpies',
 	description: 'Get the pies that a player owns',
 	options: [
-		usernameOption,
 		userIdOption,
+		usernameOption,
 	],
 };
 
@@ -167,6 +167,22 @@ const CHECK_BADGES_COMMAND = {
 	options: [
 		{
 			type: 1,
+			name: 'badge_pack',
+			description: 'Check a player\'s owned badges from a badge pack',
+			options: [
+				{
+					type: 3,
+					name: 'badge_pack',
+					description: 'Name of the badge pack',
+					required: true,
+					choices: createCommandChoices(gameData.badgePackNames),
+				},
+				userIdOption,
+				usernameOption,
+			],
+		},
+		{
+			type: 1,
 			name: 'game_name',
 			description: 'Check a player\'s owned badges in a game by name',
 			options: [
@@ -175,10 +191,10 @@ const CHECK_BADGES_COMMAND = {
 					name: 'game_name',
 					description: 'Name of the game',
 					required: true,
-					choices: createCommandChoices(epicDepartment.gameNames),
+					choices: createCommandChoices(gameData.gameNames),
 				},
-				usernameOption,
 				userIdOption,
+				usernameOption,
 			],
 		},
 		{
@@ -192,8 +208,8 @@ const CHECK_BADGES_COMMAND = {
 					description: "The game's place id",
 					required: true,
 				},
-				usernameOption,
 				userIdOption,
+				usernameOption,
 			],
 		},
 	],
@@ -214,7 +230,7 @@ const LIST_BADGES_COMMAND = {
 					name: 'game_name',
 					description: 'Name of the game',
 					required: true,
-					choices: createCommandChoices(epicDepartment.gameNames),
+					choices: createCommandChoices(gameData.gameNames),
 				},
 			],
 		},
@@ -242,4 +258,4 @@ const ALL_COMMANDS = [
 	CHECK_BADGES_COMMAND, LIST_BADGES_COMMAND
 ];
 
-InstallGlobalCommands(process.env.DISCORD_APPLICATION_ID, ALL_COMMANDS);
+utils.InstallGlobalCommands(process.env.DISCORD_APPLICATION_ID, ALL_COMMANDS);

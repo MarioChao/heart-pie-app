@@ -6,7 +6,7 @@ async function fetchUrl(apiUrl, urlParameters, requestOptions) {
 		const searchParams = new URLSearchParams(urlParameters);
 		apiUrl += "?" + searchParams.toString();
 	}
-	console.log("[fetch-api]: Fetching...");
+	console.log(`[fetch-api]: Fetching ${apiUrl}...`);
 
 	const request = new Request(apiUrl, requestOptions);
 
@@ -22,30 +22,37 @@ async function fetchUrl(apiUrl, urlParameters, requestOptions) {
 			});
 
 			const cache = caches.default;
-			console.log("[fetch-api]: Cached result:");
-			console.log(cache);
-
+			
 			// Find the cache key in the cache
 			let response = await cache.match(cacheKey);
-			if (!response) {
-				response = await fetch(request);
-				cache.put(cacheKey, response.clone());
+			if (response) {
+				console.log(`[fetch-api]: Cached result: '${cache}'`);
 			} else {
-				console.log("[fetch-api]: Fetch cached.");
+				response = await fetch(request);
+				if (!response.ok) {
+					console.error(`[fetch-api]: Could not fetch resources for ${apiUrl}.`)
+					throw new Error("[fetch-api]: Could not fetch resources.");
+				}
+				cache.put(cacheKey, response.clone());
 			}
-			return response.json();
+			const data = await response.json();
+			console.log("[fetch-api]: Cached fetch json successful.");
+			return data;
 		}
 		
 		// Fetch
 		const response = await fetch(request);
 		if (!response.ok) {
+			console.error(`[fetch-api]: Could not fetch resources for ${apiUrl}.`)
 			throw new Error("[fetch-api]: Could not fetch resources.");
 		}
 
 		const data = await response.json();
+		console.log(`[fetch-api]: Fetch json successful.`)
 		return data;
 
 	} catch (error) {
+		console.error(`[fetch-api]: Error occured: ${error}`)
 		throw error;
 	}
 }

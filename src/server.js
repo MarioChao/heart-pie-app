@@ -18,12 +18,10 @@ import {
 	MessageComponentTypes,
 	ButtonStyleTypes,
 } from "discord-interactions";
+import { contextWaitUntil } from "./scripts/utils.js";
 import {
-	VerifyDiscordRequest,
-	getRandomEmoji,
-	DiscordRequest,
-	contextWaitUntil,
-} from "./scripts/utils.js";
+	utils,
+} from "./command-scripts/utils.js";
 import {
 	createPagesActionRowComponent,
 	createPagesTextInputModalBody,
@@ -31,6 +29,8 @@ import {
 import { getShuffledOptions, getResult } from "./scripts/rps-game.js";
 import { functionModule as pieHike } from "./scripts/pie.js";
 import { functionModule as epicDepartment } from "./scripts/epic-department.js";
+import { createFailBody } from "./scripts/embed-constants.js";
+import { gameData } from "./command-scripts/game-data.js";
 
 // From https://github.com/discord/cloudflare-sample-app/blob/main/src/server.js
 class JsonResponse extends Response {
@@ -93,7 +93,7 @@ router.get('/interactions', (request, env) => {
  */
 router.post("/interactions", async (request, env, context) => {
 	// Parse request body and verifies incoming requests using discord-interactions package
-	const { isValid, interaction } = await VerifyDiscordRequest(
+	const { isValid, interaction } = await utils.VerifyDiscordRequest(
 		request,
 		env,
 	);
@@ -119,6 +119,7 @@ router.post("/interactions", async (request, env, context) => {
 	 */
 	if (type === InteractionType.APPLICATION_COMMAND) {
 		const { name } = data;
+		console.log(`[server]: Interaction name: ${name}.`)
 
 		// "test" command
 		if (name === "test") {
@@ -130,7 +131,7 @@ router.post("/interactions", async (request, env, context) => {
 				type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
 				data: {
 					// Fetches a random emoji to send from a helper function
-					content: `hello <@${userId}> ` + getRandomEmoji(),
+					content: `hello <@${userId}> ` + utils.getRandomEmoji(),
 					flags: InteractionResponseFlags.EPHEMERAL,
 				},
 			});
@@ -210,7 +211,7 @@ router.post("/interactions", async (request, env, context) => {
 	
 				// Edit response
 				const endpoint = `webhooks/${env.DISCORD_APPLICATION_ID}/${token}/messages/@original`;
-				await DiscordRequest(endpoint, {
+				await utils.DiscordRequest(endpoint, {
 					method: "PATCH",
 					body: resultBody,
 				});
@@ -238,7 +239,7 @@ router.post("/interactions", async (request, env, context) => {
 
 				// Edit response
 				const endpoint = `webhooks/${env.DISCORD_APPLICATION_ID}/${token}/messages/@original`;
-				await DiscordRequest(endpoint, {
+				await utils.DiscordRequest(endpoint, {
 					method: "PATCH",
 					body: resultBody,
 				});
@@ -262,7 +263,7 @@ router.post("/interactions", async (request, env, context) => {
 
 				// Edit response
 				const endpoint = `webhooks/${env.DISCORD_APPLICATION_ID}/${token}/messages/@original`;
-				await DiscordRequest(endpoint, {
+				await utils.DiscordRequest(endpoint, {
 					method: "PATCH",
 					body: resultBody,
 				});
@@ -278,14 +279,14 @@ router.post("/interactions", async (request, env, context) => {
 			contextWaitUntil(context, async () => {
 				// Get result
 				const playerInfo = {
-					username: data.options[0].value,
-					userId: data.options[1] && data.options[1].value,
+					userId: data.options[0] && data.options[0].value,
+					username: data.options[1] && data.options[1].value,
 				};
 				const resultBody = await pieHike.getPies(playerInfo);
 
 				// Edit response
 				const endpoint = `webhooks/${env.DISCORD_APPLICATION_ID}/${token}/messages/@original`;
-				await DiscordRequest(endpoint, {
+				await utils.DiscordRequest(endpoint, {
 					method: "PATCH",
 					body: resultBody,
 				});
@@ -345,28 +346,40 @@ router.post("/interactions", async (request, env, context) => {
 			contextWaitUntil(context, async () => {
 				// Get result
 				let resultBody;
-				if (subcommandName === "game_name") {
-					const gameName = subcommand.options[0].value;
-					const placeId = epicDepartment.gameIds[gameName];
-					const playerInfo = {
-						username: subcommand.options[1].value,
-						userId: subcommand.options[2] && subcommand.options[2].value,
-					};
-					resultBody = await epicDepartment.checkBadgesByPlaceId(placeId, playerInfo);
-				} else if (subcommandName === "place_id") {
-					const placeId = subcommand.options[0].value;
-					const playerInfo = {
-						username: subcommand.options[1].value,
-						userId: subcommand.options[2] && subcommand.options[2].value,
-					};
-					resultBody = await epicDepartment.checkBadgesByPlaceId(placeId, playerInfo);
+				try {
+					if (subcommandName === "game_name") {
+						const gameName = subcommand.options[0].value;
+						const placeId = gameData.game_placeId[gameName];
+						const playerInfo = {
+							userId: subcommand.options[1] && subcommand.options[1].value,
+							username: subcommand.options[2] && subcommand.options[2].value,
+						};
+						resultBody = await epicDepartment.checkBadgesByPlaceId(placeId, playerInfo);
+					} else if (subcommandName === "place_id") {
+						const placeId = subcommand.options[0].value;
+						const playerInfo = {
+							userId: subcommand.options[1] && subcommand.options[1].value,
+							username: subcommand.options[2] && subcommand.options[2].value,
+						};
+						resultBody = await epicDepartment.checkBadgesByPlaceId(placeId, playerInfo);
+					} else if (subcommandName === "badge_pack") {
+						const badgePackName = subcommand.options[0].value;
+						const badgePackBadges = gameData.badgePack_badges[badgePackName];
+						const playerInfo = {
+							userId: subcommand.options[1] && subcommand.options[1].value,
+							username: subcommand.options[2] && subcommand.options[2].value,
+						};
+						resultBody = await epicDepartment.checkBadges(`[pack] ${badgePackName}`, badgePackBadges, playerInfo);
+					}
+					console.info(`[server]: Check badges done.\n${resultBody}`);
+				} catch (error) {
+					resultBody = createFailBody("Error", "Please try again.")
+					console.error(`[server]: Check badges errored: ${error}.\n${resultBody}`);
 				}
-				console.log("[server]: Check badges done.");
-				console.log(resultBody);
-				
+
 				// Edit response
 				const endpoint = `webhooks/${env.DISCORD_APPLICATION_ID}/${token}/messages/@original`;
-				await DiscordRequest(endpoint, {
+				await utils.DiscordRequest(endpoint, {
 					method: "PATCH",
 					body: resultBody,
 				});
@@ -389,7 +402,7 @@ router.post("/interactions", async (request, env, context) => {
 				let placeId;
 				if (subcommandName === "game_name") {
 					const gameName = subcommand.options[0].value;
-					placeId = epicDepartment.gameIds[gameName];
+					placeId = gameData.game_placeId[gameName];
 					resultInfo = await epicDepartment.listBadgesByPlaceId(placeId);
 				} else if (subcommandName === "place_id") {
 					placeId = subcommand.options[0].value;
@@ -407,7 +420,7 @@ router.post("/interactions", async (request, env, context) => {
 
 				// Edit response
 				const endpoint = `webhooks/${env.DISCORD_APPLICATION_ID}/${token}/messages/@original`;
-				await DiscordRequest(endpoint, {
+				await utils.DiscordRequest(endpoint, {
 					method: "PATCH",
 					body: resultBody,
 				});
@@ -422,6 +435,7 @@ router.post("/interactions", async (request, env, context) => {
 
 		// Get type
 		const componentId = data.custom_id;
+		console.log(`[server]: Interaction message component id: ${componentId}.`)
 
 		// RPS
 		if (componentId.startsWith("accept_button_")) {
@@ -434,7 +448,7 @@ router.post("/interactions", async (request, env, context) => {
 				contextWaitUntil(context, async () => {
 					// Get message with token
 					const endpoint = `webhooks/${env.DISCORD_APPLICATION_ID}/${token}/messages/${interaction.message.id}`;
-					await DiscordRequest(endpoint, { method: "DELETE" });
+					await utils.DiscordRequest(endpoint, { method: "DELETE" });
 				});
 
 				// Send interaction
@@ -488,10 +502,10 @@ router.post("/interactions", async (request, env, context) => {
 				contextWaitUntil(context, async () => {
 					// Get message with token
 					const endpoint = `webhooks/${env.DISCORD_APPLICATION_ID}/${token}/messages/${interaction.message.id}`;
-					await DiscordRequest(endpoint, {
+					await utils.DiscordRequest(endpoint, {
 						method: "PATCH",
 						body: {
-							content: "Nice choice " + getRandomEmoji(),
+							content: "Nice choice " + utils.getRandomEmoji(),
 							components: [],
 						},
 					});
@@ -538,7 +552,7 @@ router.post("/interactions", async (request, env, context) => {
 				];
 
 				// Edit response
-				await DiscordRequest(interactionEndpoint, {
+				await utils.DiscordRequest(interactionEndpoint, {
 					method: "PATCH",
 					body: resultBody,
 				});
@@ -578,7 +592,7 @@ router.post("/interactions", async (request, env, context) => {
 				];
 
 				// Edit response
-				await DiscordRequest(interactionEndpoint, {
+				await utils.DiscordRequest(interactionEndpoint, {
 					method: "PATCH",
 					body: resultBody,
 				});
@@ -593,6 +607,7 @@ router.post("/interactions", async (request, env, context) => {
 
 		// Get type
 		const modalId = data.custom_id;
+		console.log(`[server]: Interaction modal id: ${modalId}.`)
 
 		// Hike all
 		if (modalId === "hikeall_modal"){
@@ -619,7 +634,7 @@ router.post("/interactions", async (request, env, context) => {
 				];
 
 				// Edit response
-				await DiscordRequest(interactionEndpoint, {
+				await utils.DiscordRequest(interactionEndpoint, {
 					method: "PATCH",
 					body: resultBody,
 				});
@@ -655,7 +670,7 @@ router.post("/interactions", async (request, env, context) => {
 				];
 
 				// Edit response
-				await DiscordRequest(interactionEndpoint, {
+				await utils.DiscordRequest(interactionEndpoint, {
 					method: "PATCH",
 					body: resultBody,
 				});

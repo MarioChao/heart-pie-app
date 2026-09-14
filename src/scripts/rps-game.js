@@ -1,4 +1,4 @@
-import { capitalize } from './utils.js';
+import { utils } from '../command-scripts/utils.js';
 
 export function getResult(p1, p2) {
 	let gameResult;
@@ -63,7 +63,7 @@ export function getShuffledOptions() {
 		// Formatted for select menus
 		// https://discord.com/developers/docs/interactions/message-components#select-menu-object-select-option-structure
 		options.push({
-			label: capitalize(c),
+			label: utils.capitalize(c),
 			value: c.toLowerCase(),
 			description: RPSChoices[c]['description'],
 		});

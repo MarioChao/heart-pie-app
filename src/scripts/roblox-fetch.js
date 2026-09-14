@@ -3,6 +3,7 @@
 // Imports
 import { env } from "cloudflare:workers";
 import { functionModule as fetchApi } from "./fetch-api.js";
+import { tryRetry } from "./utils.js";
 
 // Constants
 
@@ -184,7 +185,7 @@ async function fetchInventoryBadges(userId, badgeIds) {
 	console.log(`[roblox-fetch]: Called fetchInventoryBadges.`);
 
 	// Get api key
-	const apiKey = env.READ_INVENTORY_KEY;
+	const apiKey = env.READ_INVENTORY_KEY_1;
 	if (!apiKey) {
 		console.log('[roblox-fetch]: No api key found!');
 		throw new Error('Missing api key.');
@@ -292,11 +293,14 @@ async function fetchUsers(usernames) {
 			"Content-Type": "application/json",
 		},
 	};
+	console.log(`[roblox-fetch]: Fetching usernames for '${usernames.join(', ')}'.`);
 
 	// Fetch users data
 	let data;
 	try {
-		data = await fetchApi.fetchUrl(apiUrl, null, requestOptions);
+		await tryRetry(async () => {
+			data = await fetchApi.fetchUrl(apiUrl, null, requestOptions);
+		}, 3, 50);
 	} catch (error) {
 		throw error;
 	}

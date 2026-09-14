@@ -1,6 +1,10 @@
+// Imports
+
+import phb_badges from './pack-pie-hiking-badger.json' with { type: 'json' };
+
 // Constants
 
-const savedGamePlaceIds = {
+const game_placeId = {
 	"Badge Points": 88622467292584,
 	"CRAZY HORSE GAME": 15716048273,
 	"Dimensions": 8927874968,
@@ -28,4 +32,18 @@ const savedGamePlaceIds = {
 	"Viper Enclave": 10734356776,
 };
 
-export { savedGamePlaceIds };
+const badgePack_badges = {
+	"Pie Hiking Badger": phb_badges,
+}
+
+const badgePackNames = Object.keys(badgePack_badges);
+const gameNames = Object.keys(game_placeId);
+
+const gameData = {
+	badgePack_badges,
+	badgePackNames,
+	game_placeId,
+	gameNames,
+};
+
+export { gameData };

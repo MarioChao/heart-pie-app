@@ -1,8 +1,7 @@
 // Imports
 import { functionModule as robloxFetchApi } from './roblox-fetch.js';
-import { validatePlayerInfo } from './utils.js';
+import { tryRetry, validatePlayerInfo } from './utils.js';
 import { successColor, fieldValueLimit, createFailBody } from './embed-constants.js';
-import { savedGamePlaceIds } from './game-data.js';
 
 // Constants
 
@@ -11,11 +10,6 @@ const universeBadgeFieldsCache = {};
 console.log("[epic-department]: Restart.");
 
 // Local functions
-
-function getGameNames() {
-	const gameNames = Object.keys(savedGamePlaceIds);
-	return gameNames;
-}
 
 async function _createBadgeFields(universeId) {
 	// Get game badges
@@ -113,7 +107,7 @@ async function getUniverseId(inputPlaceId) {
 async function getUserId(inputUsername) {
 	let userId;
 	try {
-		console.log(`[epic-department]: Fetching user id for ${inputUsername}.`);
+		console.log(`[epic-department]: Fetching user id for '${inputUsername}'.`);
 		userId = await robloxFetchApi.fetchUserId(inputUsername);
 		console.log(`[epic-department]: Fetched result: ${userId}.`);
 	} catch (error) {
@@ -122,44 +116,7 @@ async function getUserId(inputUsername) {
 	return userId;
 }
 
-async function checkBadgesByPlaceId(inputPlaceId, playerInfo) {
-	// Get player information
-	try {
-		playerInfo = await validatePlayerInfo(playerInfo);
-	} catch (error) {
-		return createFailBody("Error", "Error in getting player information.");
-	}
-	let username = playerInfo.username;
-	let userId = playerInfo.userId;
-	console.log(`[epic-department]: Got player info.`);
-
-	// Get universe id
-	let universeId;
-	try {
-		universeId = await getUniverseId(inputPlaceId);
-	} catch (error) {
-		return createFailBody("Error", "Error in getting universe id.");
-	}
-	console.log(`[epic-department]: Got universe id.`);
-
-	// Get universe name
-	let universeName;
-	try {
-		universeName = await robloxFetchApi.fetchUniverseName(universeId);
-	} catch (error) {
-		return createFailBody("Error", "Error in getting universe name.");
-	}
-	console.log(`[epic-department]: Got universe name.`);
-	
-	// Get game badges
-	let gameBadges;
-	try {
-		gameBadges = await robloxFetchApi.fetchBadgesByUniverseId(universeId);
-	} catch (error) {
-		return createFailBody("Error", "Error in getting game badges.");
-	}
-	console.log(`[epic-department]: Got badges.`);
-
+async function getAwardedUnawardedBadges(gameBadges, userId) {
 	// Get badges awarded to player
 	const gameBadgeIds = []
 	for (const badge of gameBadges) {
@@ -167,7 +124,9 @@ async function checkBadgesByPlaceId(inputPlaceId, playerInfo) {
 	}
 	let awardedBadgeIds;
 	try {
-		awardedBadgeIds = await robloxFetchApi.fetchAwardedBadgeIds(userId, gameBadgeIds);
+		await tryRetry(async () => {
+			awardedBadgeIds = await robloxFetchApi.fetchAwardedBadgeIds(userId, gameBadgeIds);
+		}, 3, 50);
 	} catch (error) {
 		return createFailBody("Error", "Error in getting awarded badges.");
 	}
@@ -202,6 +161,25 @@ async function checkBadgesByPlaceId(inputPlaceId, playerInfo) {
 		unawardedBadges.push(gameBadges[i0]);
 		i0++;
 	}
+	return {awardedBadges, unawardedBadges};
+}
+
+async function checkBadges(resultTitle, gameBadges, playerInfo) {
+	// Get player information
+	try {
+		await tryRetry(async () => {
+			playerInfo = await validatePlayerInfo(playerInfo);
+		}, 3, 50);
+	} catch (error) {
+		return createFailBody("Error", "Error in getting player information.");
+	}
+	const username = playerInfo.username;
+	const userId = playerInfo.userId;
+	console.log(`[epic-department]: 1: Got player info.`);
+
+	// Get awarded & unawarded badges
+	const {awardedBadges, unawardedBadges} = await getAwardedUnawardedBadges(gameBadges, userId);
+	console.log(`[epic-department]: 2: Got awarded & unawarded badges.`);
 
 	// Create awarded text
 	let awardedText = "";
@@ -233,10 +211,114 @@ async function checkBadgesByPlaceId(inputPlaceId, playerInfo) {
 		inline: true,
 	};
 
-	console.log("[epic-department]: Check badges result:");
-	console.log(awardedText.length, unawardedText.length);
-	console.log("%d/%d", awardedBadgeIds.length, gameBadges.length);
+	console.log(
+		`[epic-department]: Check badges result:\n` +
+		`Text lengths (awarded & unawarded): ${awardedText.length}, ${unawardedText.length}\n` +
+		`Awarded badges ratio: ${awardedBadges.length} / ${gameBadges.length}`
+	);
+
+	// Create result body
+	const resultEmbed = {
+		title: `${resultTitle}`,
+		color: successColor,
+		fields: [awardedEmbedField, unawardedEmbedField,],
+	};
+	const resultEmbeds = [resultEmbed];
+	const resultBody = {
+		content: `Badge info for [${username}](<https://www.roblox.com/users/${userId}>)`,
+		embeds: resultEmbeds,
+	}
+
+	return resultBody;
+}
+
+async function checkBadgesByPlaceId(inputPlaceId, playerInfo) {
+	// Get player information
+	try {
+		await tryRetry(async () => {
+			playerInfo = await validatePlayerInfo(playerInfo);
+		}, 3, 50);
+	} catch (error) {
+		return createFailBody("Error", "Error in getting player information.");
+	}
+	let username = playerInfo.username;
+	let userId = playerInfo.userId;
+	console.log(`[epic-department]: 1: Got player info.`);
+
+	// Get universe id
+	let universeId;
+	try {
+		await tryRetry(async () => {
+			universeId = await getUniverseId(inputPlaceId);
+		}, 3, 50);
+	} catch (error) {
+		return createFailBody("Error", "Error in getting universe id.");
+	}
+	console.log(`[epic-department]: 2: Got universe id.`);
+
+	// Get universe name
+	let universeName;
+	try {
+		await tryRetry(async () => {
+			universeName = await robloxFetchApi.fetchUniverseName(universeId);
+		}, 3, 50);
+	} catch (error) {
+		universeName = `<failed to fetch>`;
+		console.warn(`[epic-department]: Failed to get universe name for ${universeId}: ${error}`);
+	}
+	console.log(`[epic-department]: 3: Got universe name.`);
 	
+	// Get game badges
+	let gameBadges;
+	try {
+		await tryRetry(async () => {
+			gameBadges = await robloxFetchApi.fetchBadgesByUniverseId(universeId);
+		}, 3, 50);
+	} catch (error) {
+		return createFailBody("Error", "Error in getting game badges.");
+	}
+	console.log(`[epic-department]: 4: Got badges.`);
+
+	// Get awarded & unawarded badges
+	const {awardedBadges, unawardedBadges} = await getAwardedUnawardedBadges(gameBadges, userId);
+	console.log(`[epic-department]: 5: Got awarded & unawarded badges.`);
+
+	// Create awarded text
+	let awardedText = "";
+	for (const badge of awardedBadges) {
+		let addText = `\n${badge.name}`;
+		if (awardedText.length + addText.length > fieldValueLimit) {
+			break;
+		}
+		awardedText += addText;
+	}
+	const awardedEmbedField = {
+		name: `Awarded Badges (${awardedBadges.length})`,
+		value: awardedText,
+		inline: true,
+	};
+	
+	// Create unawarded text
+	let unawardedText = "";
+	for (const badge of unawardedBadges) {
+		let addText = `\n${badge.name}`;
+		if (unawardedText.length + addText.length > fieldValueLimit) {
+			break;
+		}
+		unawardedText += addText;
+	}
+	const unawardedEmbedField = {
+		name: `Unawarded Badges (${unawardedBadges.length})`,
+		value: unawardedText,
+		inline: true,
+	};
+
+	console.log(
+		`[epic-department]: Check badges result:\n` +
+		`Text lengths (awarded & unawarded): ${awardedText.length}, ${unawardedText.length}\n` +
+		`Awarded badges ratio: ${awardedBadges.length} / ${gameBadges.length}`
+	);
+
 	// Create result body
 	const resultEmbed = {
 		title: `${universeName}`,
@@ -261,7 +343,9 @@ async function listBadgesByPlaceId(inputPlaceId, inputPage = 1) {
 	// Get universe id
 	let universeId;
 	try {
-		universeId = await getUniverseId(inputPlaceId);
+		await tryRetry(async () => {
+			universeId = await getUniverseId(inputPlaceId);
+		}, 3, 50);
 	} catch (error) {
 		failInfo.resultBody = createFailBody("Error", "Error in getting universe id.");
 		return failInfo;
@@ -270,10 +354,12 @@ async function listBadgesByPlaceId(inputPlaceId, inputPage = 1) {
 	// Get universe name
 	let universeName;
 	try {
-		universeName = await robloxFetchApi.fetchUniverseName(universeId);
+		await tryRetry(async () => {
+			universeName = await robloxFetchApi.fetchUniverseName(universeId);
+		}, 3, 50);
 	} catch (error) {
-		failInfo.resultBody = createFailBody("Error", "Error in getting universe name.");
-		return failInfo;
+		universeName = `<failed to fetch>`;
+		console.warn(`[epic-department]: Failed to get universe name for ${universeId}: ${error}`);
 	}
 	
 	// Get field
@@ -321,10 +407,9 @@ async function listBadgesByPlaceId(inputPlaceId, inputPage = 1) {
 const functionModule = {
 	getUniverseId,
 	getUserId,
+	checkBadges,
 	checkBadgesByPlaceId,
 	listBadgesByPlaceId,
-	gameNames: getGameNames(),
-	gameIds: savedGamePlaceIds,
 };
 
 export { functionModule };

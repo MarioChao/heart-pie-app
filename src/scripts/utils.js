@@ -1,66 +1,6 @@
 // Imports
 import { env } from "cloudflare:workers";
-import {
-	verifyKey,
-	MessageComponentTypes,
-	ButtonStyleTypes,
-	TextStyleTypes,
-} from "discord-interactions";
 import { functionModule as robloxFetchApi } from './roblox-fetch.js';
-
-// Combined from discord-example-app and cloudflare-sample-app
-export async function VerifyDiscordRequest(request, env) {
-	const signature = request.headers.get('X-Signature-Ed25519');
-	const timestamp = request.headers.get('X-Signature-Timestamp');
-	const body = await request.text();
-	const isValidRequest = signature && timestamp && (await verifyKey(body, signature, timestamp, env.DISCORD_PUBLIC_KEY));
-	if (!isValidRequest) {
-		return { isValid: false };
-	}
-
-	return { interaction: JSON.parse(body), isValid: true };
-}
-
-export async function DiscordRequest(endpoint, options) {
-	// append endpoint to root API URL
-	const url = 'https://discord.com/api/v10/' + endpoint;
-
-	// Stringify payloads
-	if (options.body) options.body = JSON.stringify(options.body);
-
-	// Use fetch to make requests
-	const res = await fetch(url, {
-		headers: {
-			Authorization: `Bot ${env.DISCORD_TOKEN}`,
-			'Content-Type': 'application/json; charset=UTF-8',
-		},
-		...options
-	});
-
-	// throw API errors
-	if (!res.ok) {
-		const data = await res.json();
-		console.log("[utils]: Discord request failed.");
-		console.log(res.status);
-		throw new Error(JSON.stringify(data));
-	}
-
-	// return original response
-	return res;
-}
-
-export async function InstallGlobalCommands(appId, commands) {
-	// API endpoint to overwrite global commands
-	const endpoint = `applications/${appId}/commands`;
-
-	try {
-		// This is calling the bulk overwrite endpoint: https://discord.com/developers/docs/interactions/application-commands#bulk-overwrite-global-application-commands
-		const response = await DiscordRequest(endpoint, { method: 'PUT', body: commands });
-		console.log('[utils]: Registered all commands.');
-	} catch (err) {
-		console.error(err);
-	}
-}
 
 export function contextWaitUntil(context, callback) {
 	const promise = new Promise(async (resolve, reject) => {
@@ -84,11 +24,13 @@ export async function validatePlayerInfo(playerInfo) {
 	// Get player information
 	let username = playerInfo.username;
 	let userId = playerInfo.userId;
-	if (!userId) {
+	if (!userId || userId < 1) {
 		// Get player userId
 		try {
-			console.log(`[utils]: Fetching user id for ${username}.`);
-			userId = await robloxFetchApi.fetchUserId(username);
+			console.log(`[utils]: Fetching user id for '${username}'.`);
+			await tryRetry(async () => {
+				userId = await robloxFetchApi.fetchUserId(username);
+			}, 3, 50);
 		} catch (error) {
 			throw error;
 		}
@@ -98,7 +40,9 @@ export async function validatePlayerInfo(playerInfo) {
 	let player;
 	try {
 		console.log(`[utils]: Fetching username for user id ${userId}.`);
-		player = await robloxFetchApi.fetchPlayer(userId);
+		await tryRetry(async () => {
+			player = await robloxFetchApi.fetchPlayer(userId);
+		}, 3, 50);
 	} catch (error) {
 		throw error;
 	}
@@ -137,16 +81,6 @@ export function checkMeetRequirements(requirements, statistics) {
 	return true;
 }
 
-// Simple method that returns a random emoji from list
-export function getRandomEmoji() {
-	const emojiList = ['😭','😄','😌','🤓','😎','😤','🤖','😶‍🌫️','🌏','📸','💿','👋','🌊','✨'];
-	return emojiList[Math.floor(Math.random() * emojiList.length)];
-}
-
-export function capitalize(str) {
-	return str.charAt(0).toUpperCase() + str.slice(1);
-}
-
 export function printEnvKeynames() {
 	let envKeynames = [];
 	for (const str of Object.keys(env)) {
@@ -154,3 +88,32 @@ export function printEnvKeynames() {
 	}
 	console.log(`[utils]: Env keynames: ${envKeynames.join(',')}`);
 }
+
+const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+// Utility to automatically retry calls when error occurs.
+// Syntax: await tryRetry(async () => { ... }, 3, 50);
+export async function tryRetry(callback, maxTrials, retryDelayMs) {
+	let trial = 1;
+	let isSuccessful = false;
+	let resultError = null;
+	while (trial <= maxTrials) {
+		try {
+			await callback()
+			isSuccessful = true;
+			console.log(`[utils]: Try-retry #${trial} successful.`)
+			break;
+		} catch (error) {
+			resultError = error;
+		}
+		console.log(`[utils]: Try-retry #${trial} failed.`)
+		trial++;
+		if (trial < maxTrials) {
+			await delay(retryDelayMs);
+		}
+	}
+	if (isSuccessful === false) {
+		throw resultError;
+	}
+}
+
