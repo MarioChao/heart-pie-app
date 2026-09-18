@@ -1,5 +1,15 @@
 # Changelogs
 
+## [v1.0.2] Autocomplete choices | 2026/09/18
+
+Added autocomplete choices for `game_name` and `badge_pack` parameters:
+- Enables more than 25 choices to be selected through autocomplete.
+
+Added more game names:
+- \> home, Abyss World, Detachment: Reimagined, Gears, Incessant Dream,
+- Isolarium, NEON MILKBOX, Nullscape, Pressure, RBLX: Dream Emulator,
+- STATION, The Qoppa Epistles, "To The Sky, I Leave My Name"
+
 ## [v1.0.1] Badge packs + UserId / Username field swap | 2026/09/13
 
 Added a `badge_pack` subcommand for `checkbadges`.

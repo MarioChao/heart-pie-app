@@ -61,6 +61,11 @@ async function InstallGlobalCommands(appId, commands) {
 	}
 }
 
+// Create command choices from array
+function createCommandChoicesFromArray(choiceArray) {
+	return choiceArray.map((choice) => ({name: choice, value: choice}));
+}
+
 // Simple method that returns a random emoji from list
 function getRandomEmoji() {
 	const emojiList = ['😭','😄','😌','🤓','😎','😤','🤖','😶‍🌫️','🌏','📸','💿','👋','🌊','✨'];
@@ -75,6 +80,7 @@ const utils = {
     VerifyDiscordRequest,
     DiscordRequest,
     InstallGlobalCommands,
+	createCommandChoicesFromArray,
 	getRandomEmoji,
 	capitalize,
 };

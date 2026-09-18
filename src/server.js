@@ -10,7 +10,7 @@
 
 // Imports
 
-import { AutoRouter, json } from "itty-router";
+import { AutoRouter } from "itty-router";
 import {
 	InteractionType,
 	InteractionResponseType,
@@ -347,33 +347,51 @@ router.post("/interactions", async (request, env, context) => {
 				// Get result
 				let resultBody;
 				try {
-					if (subcommandName === "game_name") {
-						const gameName = subcommand.options[0].value;
-						const placeId = gameData.game_placeId[gameName];
-						const playerInfo = {
-							userId: subcommand.options[1] && subcommand.options[1].value,
-							username: subcommand.options[2] && subcommand.options[2].value,
-						};
-						resultBody = await epicDepartment.checkBadgesByPlaceId(placeId, playerInfo);
-					} else if (subcommandName === "place_id") {
-						const placeId = subcommand.options[0].value;
-						const playerInfo = {
-							userId: subcommand.options[1] && subcommand.options[1].value,
-							username: subcommand.options[2] && subcommand.options[2].value,
-						};
-						resultBody = await epicDepartment.checkBadgesByPlaceId(placeId, playerInfo);
-					} else if (subcommandName === "badge_pack") {
+					if (subcommandName === "badge_pack") {
+						// Validate badge pack name
 						const badgePackName = subcommand.options[0].value;
+						if (!gameData.badgePackNames.includes(badgePackName)) {
+							resultBody = createFailBody("Error", "Invalid badge pack name.");
+							throw new Error(`[server]: Invalid badge pack name.`)
+						}
+
+						// Get badge pack badges
 						const badgePackBadges = gameData.badgePack_badges[badgePackName];
+
+						// Parse info & check badges
 						const playerInfo = {
 							userId: subcommand.options[1] && subcommand.options[1].value,
 							username: subcommand.options[2] && subcommand.options[2].value,
 						};
 						resultBody = await epicDepartment.checkBadges(`[pack] ${badgePackName}`, badgePackBadges, playerInfo);
+					} else if (subcommandName === "game_name" || subcommandName == "place_id") {
+						// Get place id
+						let _placeId;
+						if (subcommandName == "game_name") {
+							// Validate game name
+							const gameName = subcommand.options[0].value;
+							if (!gameData.gameNames.includes(gameName)) {
+								resultBody = createFailBody("Error", "Invalid game name.");
+								throw new Error(`[server]: Invalid game name.`)
+							}
+							_placeId = gameData.game_placeId[gameName];
+						} else {
+							_placeId = subcommand.option[0].value;
+						}
+						const placeId = _placeId;
+
+						// Parse info & check badges
+						const playerInfo = {
+							userId: subcommand.options[1] && subcommand.options[1].value,
+							username: subcommand.options[2] && subcommand.options[2].value,
+						};
+						resultBody = await epicDepartment.checkBadgesByPlaceId(placeId, playerInfo);
 					}
 					console.info(`[server]: Check badges done.\n${resultBody}`);
 				} catch (error) {
-					resultBody = createFailBody("Error", "Please try again.")
+					if (resultBody == null) {
+						resultBody = createFailBody("Error", "Please try again.")
+					}
 					console.error(`[server]: Check badges errored: ${error}.\n${resultBody}`);
 				}
 
@@ -398,25 +416,43 @@ router.post("/interactions", async (request, env, context) => {
 			// Defer response
 			contextWaitUntil(context, async () => {
 				// Get result
-				let resultInfo;
-				let placeId;
-				if (subcommandName === "game_name") {
-					const gameName = subcommand.options[0].value;
-					placeId = gameData.game_placeId[gameName];
-					resultInfo = await epicDepartment.listBadgesByPlaceId(placeId);
-				} else if (subcommandName === "place_id") {
-					placeId = subcommand.options[0].value;
-					resultInfo = await epicDepartment.listBadgesByPlaceId(placeId);
-				}
-				const resultBody = resultInfo.resultBody;
-				const pageCount = resultInfo.pageCount;
-				const page = 1;
+				let resultBody;
+				try {
+					let resultInfo;
+					let placeId;
 
-				// Add components
-				const pagesActionRow = createPagesActionRowComponent(page, pageCount, `listbadges_page_${placeId}_`);
-				resultBody.components = [
-					pagesActionRow,
-				];
+					// Get place id
+					if (subcommandName === "game_name") {
+						// Validate game name
+						const gameName = subcommand.options[0].value;
+						if (!gameData.gameNames.includes(gameName)) {
+							resultBody = createFailBody("Error", "Invalid game name.");
+							throw new Error("[server]: Invalid game name.");
+						}
+						placeId = gameData.game_placeId[gameName];
+					} else if (subcommandName === "place_id") {
+						placeId = subcommand.options[0].value;
+					}
+
+					// Get badges info
+					resultInfo = await epicDepartment.listBadgesByPlaceId(placeId);
+
+					// Parse result
+					resultBody = resultInfo.resultBody;
+					const pageCount = resultInfo.pageCount;
+					const page = 1;
+	
+					// Add components
+					const pagesActionRow = createPagesActionRowComponent(page, pageCount, `listbadges_page_${placeId}_`);
+					resultBody.components = [
+						pagesActionRow,
+					];
+				} catch (error) {
+					if (resultBody == null) {
+						resultBody = createFailBody("Error", "Please try again.")
+					}
+					console.error(`[server]: List badges errored: ${error}.\n${resultBody}`);	
+				}
 
 				// Edit response
 				const endpoint = `webhooks/${env.DISCORD_APPLICATION_ID}/${token}/messages/@original`;
@@ -435,7 +471,7 @@ router.post("/interactions", async (request, env, context) => {
 
 		// Get type
 		const componentId = data.custom_id;
-		console.log(`[server]: Interaction message component id: ${componentId}.`)
+		console.log(`[server]: Interaction message component id: ${componentId}.`);
 
 		// RPS
 		if (componentId.startsWith("accept_button_")) {
@@ -607,7 +643,7 @@ router.post("/interactions", async (request, env, context) => {
 
 		// Get type
 		const modalId = data.custom_id;
-		console.log(`[server]: Interaction modal id: ${modalId}.`)
+		console.log(`[server]: Interaction modal id: ${modalId}.`);
 
 		// Hike all
 		if (modalId === "hikeall_modal"){
@@ -679,6 +715,61 @@ router.post("/interactions", async (request, env, context) => {
 			// Initial response
 			return new JsonResponse(componentDeferredEphemeralResponse);
 		}
+	} else if (type == InteractionType.APPLICATION_COMMAND_AUTOCOMPLETE) {
+		// Get type
+		console.log(`[server]: Interaction autocomplete id: ${id}.`);
+
+		// Get focused option
+		let _focusedOption;
+		for (const option of data.options) {
+			if (option.focused === true) {
+				_focusedOption = option;
+				console.log(`[server]: Found focused option ${_focusedOption.name}.`);
+				break;
+			}
+			if (Array.isArray(option.options)) {
+				_focusedOption = option.options.find((value) => (value.focused === true));
+				if (_focusedOption != null) {
+					console.log(`[server]: Found focused suboption ${_focusedOption.name}.`);
+					break;
+				}
+			}
+		}
+		const focusedOption = _focusedOption;
+		if (focusedOption == null) {
+			console.error(`[server]: Unable to find a focused option for autocomplete.`);
+			return new JsonResponse({
+				type: InteractionResponseType.APPLICATION_COMMAND_AUTOCOMPLETE_RESULT,
+				data: {
+					choices: [],
+				},
+			});
+		}
+
+		// Get option details
+		const optionName = focusedOption.name;
+		const optionValue = focusedOption.value;
+
+		// Get choices
+		const choices_raw = gameData.getChoicesArrayFromOptionName(optionName);
+
+		// Filter choices
+		const choices_filtered = choices_raw.filter((choice) => choice.toLowerCase().indexOf(optionValue.toLowerCase()) !== -1)
+
+		// Trim to 25 elements
+		const choices_trimmed = choices_filtered.slice(0, 25);
+
+		// Get choices result
+		const choices_result = utils.createCommandChoicesFromArray(choices_trimmed);
+		console.log(`[server]: Choices found.`);
+
+		// Return response
+		return new JsonResponse({
+			type: InteractionResponseType.APPLICATION_COMMAND_AUTOCOMPLETE_RESULT,
+			data: {
+				choices: choices_result,
+			},
+		});
 	}
 });
 

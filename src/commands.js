@@ -35,21 +35,6 @@ const userIdOption = {
 	min_value: 0,
 };
 
-// Create command choices from array
-function createCommandChoices(choiceArray) {
-	const choices = choiceArray;
-	const commandChoices = [];
-
-	for (const choice of choices) {
-		commandChoices.push({
-			name: choice,
-			value: choice,
-		});
-	}
-
-	return commandChoices;
-}
-
 // Test command
 const TEST_COMMAND = {
 	type: 1,
@@ -68,7 +53,7 @@ const RPS_COMMAND = {
 			name: 'object',
 			description: 'Pick your object',
 			required: true,
-			choices: createCommandChoices(getRPSChoices()),
+			choices: utils.createCommandChoicesFromArray(getRPSChoices()),
 		},
 	],
 };
@@ -175,7 +160,7 @@ const CHECK_BADGES_COMMAND = {
 					name: 'badge_pack',
 					description: 'Name of the badge pack',
 					required: true,
-					choices: createCommandChoices(gameData.badgePackNames),
+					autocomplete: true,
 				},
 				userIdOption,
 				usernameOption,
@@ -191,7 +176,7 @@ const CHECK_BADGES_COMMAND = {
 					name: 'game_name',
 					description: 'Name of the game',
 					required: true,
-					choices: createCommandChoices(gameData.gameNames),
+					autocomplete: true,
 				},
 				userIdOption,
 				usernameOption,
@@ -230,7 +215,7 @@ const LIST_BADGES_COMMAND = {
 					name: 'game_name',
 					description: 'Name of the game',
 					required: true,
-					choices: createCommandChoices(gameData.gameNames),
+					autocomplete: true,
 				},
 			],
 		},
