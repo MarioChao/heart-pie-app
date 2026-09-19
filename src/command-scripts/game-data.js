@@ -1,5 +1,6 @@
 // Imports
 
+import epdp_badges from './pack-epic-department.json' with { type: 'json' };
 import phb_badges from './pack-pie-hiking-badger.json' with { type: 'json' };
 
 // Constants
@@ -47,6 +48,7 @@ const game_placeId = {
 };
 
 const badgePack_badges = {
+	"Epic Department": epdp_badges,
 	"Pie Hiking Badger": phb_badges,
 }
 

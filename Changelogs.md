@@ -1,5 +1,15 @@
 # Changelogs
 
+## [v1.0.3] Listbadges badge packs + EPDP pack | 2026/09/19
+
+Added `badge_pack` subcommand for `listbadges`.
+
+Added a badge pack (Epic Department).
+
+When universe name fetching fails, a backup name can be returned if the place id is stored in [game-data.js](./src/command-scripts/game-data.js).
+
+Refactored & simplified parts of [epic-department.js](./src/scripts/epic-department.js).
+
 ## [v1.0.2] Autocomplete choices | 2026/09/18
 
 Added autocomplete choices for `game_name` and `badge_pack` parameters:
@@ -14,6 +24,8 @@ Added more game names:
 
 Added a `badge_pack` subcommand for `checkbadges`.
 - Badge packs are hardcoded as a list of objects with `id` and `name` field, thus removing the need to do additional fetches.
+
+Added a badge pack (Pie Hiking Badger).
 
 Swapped the userId & username fields for each command (`getpies`, `checkbadges`, `listbadges`).
 

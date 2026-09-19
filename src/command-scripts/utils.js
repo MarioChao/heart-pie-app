@@ -76,6 +76,11 @@ function capitalize(str) {
 	return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
+// https://stackoverflow.com/a/28191966
+function getKeyByValue(object, value) {
+	return Object.keys(object).find(key => object[key] === value);
+}
+
 const utils = {
     VerifyDiscordRequest,
     DiscordRequest,
@@ -83,6 +88,7 @@ const utils = {
 	createCommandChoicesFromArray,
 	getRandomEmoji,
 	capitalize,
+	getKeyByValue,
 };
 
 export {utils};

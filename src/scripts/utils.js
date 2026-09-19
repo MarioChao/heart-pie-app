@@ -17,8 +17,8 @@ export function contextWaitUntil(context, callback) {
 
 /**
  * 
- * @param {{username: string, userId: number?}} playerInfo 
- * @returns The corrected playerInfo with matching username and userId
+ * @param {{username: string?, userId: number?}} playerInfo 
+ * @returns The corrected playerInfo with matching username and userId.
  */
 export async function validatePlayerInfo(playerInfo) {
 	// Get player information

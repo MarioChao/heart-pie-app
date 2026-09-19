@@ -207,6 +207,20 @@ const LIST_BADGES_COMMAND = {
 	options: [
 		{
 			type: 1,
+			name: 'badge_pack',
+			description: 'List out the badges of a badge pack',
+			options: [
+				{
+					type: 3,
+					name: 'badge_pack',
+					description: 'Name of the badge pack',
+					required: true,
+					autocomplete: true,
+				},
+			],
+		},
+		{
+			type: 1,
 			name: 'game_name',
 			description: 'List out the badges of a game by name',
 			options: [

@@ -418,35 +418,60 @@ router.post("/interactions", async (request, env, context) => {
 				// Get result
 				let resultBody;
 				try {
-					let resultInfo;
-					let placeId;
-
-					// Get place id
-					if (subcommandName === "game_name") {
-						// Validate game name
-						const gameName = subcommand.options[0].value;
-						if (!gameData.gameNames.includes(gameName)) {
-							resultBody = createFailBody("Error", "Invalid game name.");
-							throw new Error("[server]: Invalid game name.");
+					if (subcommandName === "badge_pack") {
+						// Validate badge pack name
+						const badgePackName = subcommand.options[0].value;
+						if (!gameData.badgePackNames.includes(badgePackName)) {
+							resultBody = createFailBody("Error", "Invalid badge pack name.");
+							throw new Error(`[server]: Invalid badge pack name.`)
 						}
-						placeId = gameData.game_placeId[gameName];
-					} else if (subcommandName === "place_id") {
-						placeId = subcommand.options[0].value;
+
+						// Get badge pack badges
+						const badgePackBadges = gameData.badgePack_badges[badgePackName];
+						const badgePackId = gameData.badgePackNames.indexOf(badgePackName);
+
+						// Get badges info
+						const page = 1;
+						const resultInfo = await epicDepartment.listBadges(`[pack] ${badgePackName}`, badgePackBadges);
+
+						// Parse result
+						resultBody = resultInfo.resultBody;
+						const pageCount = resultInfo.pageCount;
+
+						// Add components
+						const pagesActionRow = createPagesActionRowComponent(page, pageCount, `listbadges_packId_${badgePackId}_page_`);
+						resultBody.components = [
+							pagesActionRow,
+						];
+					} else if (subcommandName === "game_name" || subcommandName == "place_id") {
+						// Get place id
+						let placeId;
+						if (subcommandName === "game_name") {
+							// Validate game name
+							const gameName = subcommand.options[0].value;
+							if (!gameData.gameNames.includes(gameName)) {
+								resultBody = createFailBody("Error", "Invalid game name.");
+								throw new Error("[server]: Invalid game name.");
+							}
+							placeId = gameData.game_placeId[gameName];
+						} else if (subcommandName === "place_id") {
+							placeId = subcommand.options[0].value;
+						}
+
+						// Get badges info
+						const page = 1;
+						const resultInfo = await epicDepartment.listBadgesByPlaceId(placeId);
+
+						// Parse result
+						resultBody = resultInfo.resultBody;
+						const pageCount = resultInfo.pageCount;
+		
+						// Add components
+						const pagesActionRow = createPagesActionRowComponent(page, pageCount, `listbadges_placeId_${placeId}_page_`);
+						resultBody.components = [
+							pagesActionRow,
+						];
 					}
-
-					// Get badges info
-					resultInfo = await epicDepartment.listBadgesByPlaceId(placeId);
-
-					// Parse result
-					resultBody = resultInfo.resultBody;
-					const pageCount = resultInfo.pageCount;
-					const page = 1;
-	
-					// Add components
-					const pagesActionRow = createPagesActionRowComponent(page, pageCount, `listbadges_page_${placeId}_`);
-					resultBody.components = [
-						pagesActionRow,
-					];
 				} catch (error) {
 					if (resultBody == null) {
 						resultBody = createFailBody("Error", "Please try again.")
@@ -560,7 +585,7 @@ router.post("/interactions", async (request, env, context) => {
 		}
 
 		// Hike all
-		if (componentId.startsWith("hikeall_page")) {
+		else if (componentId.startsWith("hikeall_page")) {
 			// Get info
 			const componentData = componentId.substring("hikeall_page_".length).split("_"); // modify
 			let page = componentData[0];
@@ -599,14 +624,55 @@ router.post("/interactions", async (request, env, context) => {
 		}
 
 		// List badges
-		if (componentId.startsWith("listbadges_page")) {
+		else if (componentId.startsWith("listbadges_packId_")) {
 			// Get info
-			const componentData = componentId.substring("listbadges_page_".length).split("_");
-			const placeId = parseInt(componentData[0]);
-			let page = componentData[1];
+			const componentData = componentId.split("_");
+			const badgePackId = parseInt(componentData[2]);
+			let page = componentData[4];
 			if (page == "search") {
 				// Modal interaction
-				const resultBody = createPagesTextInputModalBody(`listbadges_input_${placeId}`, "listbadges_modal");
+				const resultBody = createPagesTextInputModalBody(`listbadges_packId_${packId}`, "listbadges_modal");
+				return new JsonResponse({
+					type: InteractionResponseType.MODAL,
+					data: resultBody,
+				});
+			}
+			page = parseInt(page);
+
+			// Defer response
+			contextWaitUntil(context, async () => {
+				// Get badge pack info
+				const badgePackName = gameData.badgePackNames[badgePackId];
+				const badgePackBadges = gameData.badgePack_badges[badgePackName];
+
+				// Get result info
+				const resultInfo = await epicDepartment.listBadges(`[pack] ${badgePackName}`, badgePackBadges, page);
+				const resultBody = resultInfo.resultBody;
+				const pageCount = resultInfo.pageCount;
+
+				// Add components
+				const pagesActionRow = createPagesActionRowComponent(page, pageCount, `listbadges_packId_${badgePackId}_page_`);
+				resultBody.components = [
+					pagesActionRow,
+				];
+
+				// Edit response
+				await utils.DiscordRequest(interactionEndpoint, {
+					method: "PATCH",
+					body: resultBody,
+				});
+			});
+
+			// Initial response
+			return new JsonResponse(componentDeferredEphemeralResponse);
+		} else if (componentId.startsWith("listbadges_placeId_")) {
+			// Get info
+			const componentData = componentId.split("_");
+			const placeId = parseInt(componentData[2]);
+			let page = componentData[4];
+			if (page == "search") {
+				// Modal interaction
+				const resultBody = createPagesTextInputModalBody(`listbadges_placeId_${placeId}`, "listbadges_modal");
 				return new JsonResponse({
 					type: InteractionResponseType.MODAL,
 					data: resultBody,
@@ -622,7 +688,7 @@ router.post("/interactions", async (request, env, context) => {
 				const pageCount = resultInfo.pageCount;
 				
 				// Add components
-				const pagesActionRow = createPagesActionRowComponent(page, pageCount, `listbadges_page_${placeId}_`);
+				const pagesActionRow = createPagesActionRowComponent(page, pageCount, `listbadges_placeId_${placeId}_page_`);
 				resultBody.components = [
 					pagesActionRow,
 				];
@@ -646,7 +712,7 @@ router.post("/interactions", async (request, env, context) => {
 		console.log(`[server]: Interaction modal id: ${modalId}.`);
 
 		// Hike all
-		if (modalId === "hikeall_modal"){
+		if (modalId === "hikeall_modal") {
 			// Get input component
 			const inputActionRow = data.components[0];
 			const inputComponent = inputActionRow.components[0];
@@ -681,39 +747,72 @@ router.post("/interactions", async (request, env, context) => {
 		}
 
 		// List badges
-		if (modalId === "listbadges_modal") {
+		else if (modalId === "listbadges_modal") {
 			// Get input component
 			const inputActionRow = data.components[0];
 			const inputComponent = inputActionRow.components[0];
 			const inputComponentId = inputComponent.custom_id;
 
 			// Get info
-			const componentData = inputComponentId.substring("listbadges_input_".length).split("_");
-			const placeId = parseInt(componentData[0]);
-			const page = parseInt(inputComponent.value);
+			if (inputComponentId.startsWith("listbadges_packId")) {
+				const componentData = inputComponentId.split("_");
+				const badgePackId = parseInt(componentData[2]);
+				const page = parseInt(inputComponent.value);
 
-			// Defer response
-			contextWaitUntil(context, async () => {
-				// Get result info
-				const resultInfo = await epicDepartment.listBadgesByPlaceId(placeId, page);
-				const resultBody = resultInfo.resultBody;
-				const pageCount = resultInfo.pageCount;
-				
-				// Add components
-				const pagesActionRow = createPagesActionRowComponent(page, pageCount, `listbadges_page_${placeId}_`);
-				resultBody.components = [
-					pagesActionRow,
-				];
+				// Defer response
+				contextWaitUntil(context, async () => {
+					// Get badge pack badges
+					const badgePackName = gameData.badgePackNames[badgePackId];
+					const badgePackBadges = gameData.badgePack_badges[badgePackName];
 
-				// Edit response
-				await utils.DiscordRequest(interactionEndpoint, {
-					method: "PATCH",
-					body: resultBody,
+					// Get result info
+					const resultInfo = await epicDepartment.listBadges(`[pack] ${badgePackName}`, badgePackBadges, page);
+					const resultBody = resultInfo.resultBody;
+					const pageCount = resultInfo.pageCount;
+
+					// Add components
+					const pagesActionRow = createPagesActionRowComponent(page, pageCount, `listbadges_packId_${badgePackId}_page_`);
+					resultBody.components = [
+						pagesActionRow,
+					];
+
+					// Edit response
+					await utils.DiscordRequest(interactionEndpoint, {
+						method: "PATCH",
+						body: resultBody,
+					});
 				});
-			});
 
-			// Initial response
-			return new JsonResponse(componentDeferredEphemeralResponse);
+				// Initial response
+				return new JsonResponse(componentDeferredEphemeralResponse);
+			} else if (inputComponentId.startsWith("listbadges_placeId")) {
+				const componentData = inputComponentId.split("_");
+				const placeId = parseInt(componentData[2]);
+				const page = parseInt(inputComponent.value);
+
+				// Defer response
+				contextWaitUntil(context, async () => {
+					// Get result info
+					const resultInfo = await epicDepartment.listBadgesByPlaceId(placeId, page);
+					const resultBody = resultInfo.resultBody;
+					const pageCount = resultInfo.pageCount;
+					
+					// Add components
+					const pagesActionRow = createPagesActionRowComponent(page, pageCount, `listbadges_placeId_${placeId}_page_`);
+					resultBody.components = [
+						pagesActionRow,
+					];
+	
+					// Edit response
+					await utils.DiscordRequest(interactionEndpoint, {
+						method: "PATCH",
+						body: resultBody,
+					});
+				});
+
+				// Initial response
+				return new JsonResponse(componentDeferredEphemeralResponse);
+			}
 		}
 	} else if (type == InteractionType.APPLICATION_COMMAND_AUTOCOMPLETE) {
 		// Get type
