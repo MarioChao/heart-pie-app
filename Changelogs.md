@@ -1,6 +1,10 @@
 # Changelogs
 
-## [v1.0.3] Listbadges badge packs + EPDP pack | 2026/09/19
+## [v1.0.4] Descriptions update | 2026/09/19 (2)
+
+Slightly updated descriptions for commands and [readme](./README.md).
+
+## [v1.0.3] Listbadges badge packs + EPDP pack | 2026/09/19 (1)
 
 Added `badge_pack` subcommand for `listbadges`.
 

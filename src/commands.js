@@ -62,7 +62,7 @@ const RPS_COMMAND = {
 const ENCODE_COMMAND = {
 	type: 1,
 	name: 'encode',
-	description: 'Encode a message using base64',
+	description: 'Encode a message using base64.',
 	options: [
 		{
 			type: 3,
@@ -76,7 +76,7 @@ const ENCODE_COMMAND = {
 const DECODE_COMMAND = {
 	type: 1,
 	name: 'decode',
-	description: 'Decode a base64 message',
+	description: 'Decode a base64 message.',
 	options: [
 		{
 			type: 3,
@@ -90,14 +90,14 @@ const DECODE_COMMAND = {
 // Pie commands
 const PIEHIKE_COMMAND = {
 	name: 'hike',
-	description: 'Find a random pie hike challenge',
+	description: 'Find a random pie hike challenge.',
 	type: 1,
 };
 
 const PIEHIKEALL_COMMAND = {
 	type: 1,
 	name: 'hikeall',
-	description: 'List out the possible pie hike challenges',
+	description: 'List out the possible pie hike challenges.',
 };
 
 const PIEBAKE_COMMAND = {
@@ -109,7 +109,7 @@ const PIEBAKE_COMMAND = {
 const GETPIES_COMMAND = {
 	type: 1,
 	name: 'getpies',
-	description: 'Get the pies that a player owns',
+	description: 'Get the pie skins that a player owns.',
 	options: [
 		userIdOption,
 		usernameOption,
@@ -120,7 +120,7 @@ const GETPIES_COMMAND = {
 const UNIVERSE_ID_COMMAND = {
 	type: 1,
 	name: 'getuniverseid',
-	description: 'Get the universe id of a Roblox place',
+	description: 'Get the universe id of a Roblox place.',
 	options: [
 		{
 			type: 4,
@@ -134,7 +134,7 @@ const UNIVERSE_ID_COMMAND = {
 const USER_ID_COMMAND = {
 	type: 1,
 	name: 'getuserid',
-	description: "Get a player's user id from username",
+	description: "Get a player's user id from username.",
 	options: [
 		{
 			type: 3,
@@ -148,7 +148,7 @@ const USER_ID_COMMAND = {
 const CHECK_BADGES_COMMAND = {
 	type: 1,
 	name: 'checkbadges',
-	description: 'Check a player\'s owned badges in a game',
+	description: 'Check a player\'s owned badges in a game or badge pack.',
 	options: [
 		{
 			type: 1,
@@ -203,7 +203,7 @@ const CHECK_BADGES_COMMAND = {
 const LIST_BADGES_COMMAND = {
 	type: 1,
 	name: 'listbadges',
-	description: "List out the badges of a game",
+	description: "List out the badges of a game or badge pack.",
 	options: [
 		{
 			type: 1,
