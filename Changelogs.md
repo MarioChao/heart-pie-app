@@ -1,5 +1,11 @@
 # Changelogs
 
+## [v1.0.5] Command fixes | 2026/09/20
+
+Fixed a null indexing error in `/checkbadges place_id`.
+
+Fixed vague error message when `checkbadges` failed to fetch user inventory.
+
 ## [v1.0.4] Descriptions update | 2026/09/19 (2)
 
 Slightly updated descriptions for commands and [readme](./README.md).

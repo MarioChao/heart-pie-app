@@ -376,7 +376,7 @@ router.post("/interactions", async (request, env, context) => {
 							}
 							_placeId = gameData.game_placeId[gameName];
 						} else {
-							_placeId = subcommand.option[0].value;
+							_placeId = subcommand.options[0].value;
 						}
 						const placeId = _placeId;
 

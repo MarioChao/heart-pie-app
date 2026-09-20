@@ -144,7 +144,7 @@ async function getAwardedUnawardedBadges(gameBadges, userId) {
 			awardedBadgeIds = await robloxFetchApi.fetchAwardedBadgeIds(userId, gameBadgeIds);
 		}, 3, 50);
 	} catch (error) {
-		return createFailBody("Error", "Error in getting awarded badges.");
+		throw error;
 	}
 	console.log(`[epic-department]: Got awarded badges.`);
 
@@ -201,7 +201,13 @@ async function checkBadges(resultEmbedTitle, gameBadges, playerInfo) {
 	console.log(`[epic-department]: checkBadges 1: Got player info.`);
 
 	// Get awarded & unawarded badges
-	const {awardedBadges, unawardedBadges} = await getAwardedUnawardedBadges(gameBadges, userId);
+	let _awardedBadges, _unawardedBadges;
+	try {
+		({_awardedBadges, _unawardedBadges} = await getAwardedUnawardedBadges(gameBadges, userId));
+	} catch (error) {
+		return createFailBody("Error", "Error in getting awarded badges.");
+	}
+	const {awardedBadges, unawardedBadges} = {_awardedBadges, _unawardedBadges};
 	console.log(`[epic-department]: checkBadges 2: Got awarded & unawarded badges.`);
 
 	// Create awarded text
