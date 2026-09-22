@@ -112,7 +112,9 @@ async function getUniverseId(inputPlaceId) {
 	try {
 		const placeId = parseInt(inputPlaceId);
 		console.log(`[epic-department]: Fetching universe id for ${placeId}.`);
-		universeId = await robloxFetchApi.fetchUniverseId(placeId);
+		await tryRetry(async () => {
+			universeId = await robloxFetchApi.fetchUniverseId(placeId);
+		}, 3, 50);
 		console.log(`[epic-department]: Fetched result: ${universeId}.`);
 	} catch (error) {
 		return "Failed request :(";
@@ -124,7 +126,9 @@ async function getUserId(inputUsername) {
 	let userId;
 	try {
 		console.log(`[epic-department]: Fetching user id for '${inputUsername}'.`);
-		userId = await robloxFetchApi.fetchUserId(inputUsername);
+		await tryRetry(async () => {
+			userId = await robloxFetchApi.fetchUserId(inputUsername);
+		}, 3, 50);
 		console.log(`[epic-department]: Fetched result: ${userId}.`);
 	} catch (error) {
 		return "Failed request :(";
@@ -203,11 +207,13 @@ async function checkBadges(resultEmbedTitle, gameBadges, playerInfo) {
 	// Get awarded & unawarded badges
 	let _awardedBadges, _unawardedBadges;
 	try {
-		({_awardedBadges, _unawardedBadges} = await getAwardedUnawardedBadges(gameBadges, userId));
+		({awardedBadges: _awardedBadges, unawardedBadges: _unawardedBadges} = await getAwardedUnawardedBadges(gameBadges, userId));
 	} catch (error) {
 		return createFailBody("Error", "Error in getting awarded badges.");
 	}
-	const {awardedBadges, unawardedBadges} = {_awardedBadges, _unawardedBadges};
+
+	const awardedBadges = _awardedBadges;
+	const unawardedBadges = _unawardedBadges;
 	console.log(`[epic-department]: checkBadges 2: Got awarded & unawarded badges.`);
 
 	// Create awarded text
@@ -253,9 +259,7 @@ async function checkBadgesByPlaceId(inputPlaceId, playerInfo) {
 	// Get universe id
 	let universeId;
 	try {
-		await tryRetry(async () => {
-			universeId = await getUniverseId(inputPlaceId);
-		}, 3, 50);
+		universeId = await getUniverseId(inputPlaceId);
 	} catch (error) {
 		return createFailBody("Error", "Error in getting universe id.");
 	}
@@ -364,9 +368,7 @@ async function listBadgesByPlaceId(inputPlaceId, inputPage = 1) {
 	// Get universe id
 	let universeId;
 	try {
-		await tryRetry(async () => {
-			universeId = await getUniverseId(inputPlaceId);
-		}, 3, 50);
+		universeId = await getUniverseId(inputPlaceId);
 	} catch (error) {
 		failInfo.resultBody = createFailBody("Error", "Error in getting universe id.");
 		return failInfo;

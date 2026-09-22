@@ -1,5 +1,11 @@
 # Changelogs
 
+## [v1.0.6] More command fixes | 2026/09/21
+
+Fixed `checkbadges` erroring every time.
+
+Slightly adjusted retry mechanism for fetching universeId and userId.
+
 ## [v1.0.5] Command fixes | 2026/09/20
 
 Fixed a null indexing error in `/checkbadges place_id`.
